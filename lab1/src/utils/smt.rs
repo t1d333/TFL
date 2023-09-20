@@ -12,6 +12,7 @@ impl Converter {
         (0..max_len).rev().for_each(|i| {
             let lhs_c = lhs.get(i).unwrap_or(&null);
             let rhs_c = rhs.get(i).unwrap_or(&null);
+
             if i > 0 {
                 if acc.is_empty() {
                     result.push_str(&format!(" (and {} (> {} {}))", acc, lhs_c, rhs_c));
