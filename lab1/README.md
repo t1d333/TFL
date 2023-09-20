@@ -4,9 +4,9 @@
 ## Запуск
 
 ```
-$ git clone https://github.com/t1d333/TFL && cd lab1
+$ git clone https://github.com/t1d333/TFL && cd TFL/lab1
 $ chmod +x ./scripts/run.sh
-$ run.sh <путь до файла с SRS>
+$ ./scripts/run.sh <путь до файла с SRS>
 
 ```
 
