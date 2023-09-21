@@ -14,7 +14,7 @@ impl Converter {
             let rhs_c = rhs.get(i).unwrap_or(&null);
 
             if i > 0 {
-                if acc.is_empty() {
+                if !acc.is_empty() {
                     result.push_str(&format!(" (and {} (> {} {}))", acc, lhs_c, rhs_c));
                     acc = format!("(and {} (= {} {}))", acc, lhs_c, rhs_c);
                 } else {
@@ -27,7 +27,7 @@ impl Converter {
                 } else {
                     result.push_str(&format!(" (> {} {})", lhs_c, rhs_c));
                 }
-            } else if acc.is_empty() {
+            } else if !acc.is_empty() {
                 result.push_str(&format!(" (and {} (>= {} {}))", acc, lhs_c, rhs_c));
             } else {
                 result.push_str(&format!(" (>= {} {})", lhs_c, rhs_c));
