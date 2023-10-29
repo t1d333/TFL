@@ -56,6 +56,7 @@ initial text=$ $, % sets the text that appears on the start arrow
 			  (q3) edge[loop right] node{c} (q3)
 			  (q4) edge[right, bend right] node{b} (q5)
 			  (q4) edge[loop below] node{a} (q4)
+			  (q4) edge[below, bend left] node{c} (q3)
 			  (q5) edge[left, bend left] node{a} (q6)
 			  (q6) edge[left, bend left] node{b} (q5)
 			  (q6) edge[below, bend left] node{c} (q3)
@@ -67,7 +68,9 @@ initial text=$ $, % sets the text that appears on the start arrow
 	\label{fig:task_automata}
 \end{figure}
 
-Т.к. удалось построить автомат, то язык регулярный.
+Автомат построен на основе суффиксов слов. Если ниразу не встретилось подслово $ab$, то такое слово нам подходит. Если встречается суфикс $ab$, то за ним же должен следовать
+символ $a$, чтобы уравновесить $ab$ и $aba$, иначе сделать равным количество вхождений $aba$ и $ab$ не получится, т.к. каждое вхождение $aba$ влечет за собой вхождение $ab$. Поэтому 
+из состояния $ab$ по $b$, $c$ мы попадаем в ловушку, а по символу $a$ попадаем в конечное состояние $aba$.
 
 
 \section{Задача 2}
@@ -80,7 +83,7 @@ initial text=$ $, % sets the text that appears on the start arrow
 
 \begin{equation*}
 	\begin{aligned}[t]
-		S &\rightarrow STSa\\  
+		S &\rightarrow TSTa\\  
 		S &\rightarrow SS\\
 		S &\rightarrow bb
 	\end{aligned}
@@ -93,6 +96,20 @@ initial text=$ $, % sets the text that appears on the start arrow
 \end{equation*}
 
 \newpage
+
+\subsection{Решение}
+
+Язык нетерминала $T$ совпадает с языком задаваемым регулярными выражением $(a|b)^{+}$.
+Промежуточное представление для $S$ можно записать следующим образом:
+
+\begin{equation*}
+	\begin{aligned}[t]
+		S &\rightarrow (a|b)^{+}S(a|b)^{+}a\\  
+		S &\rightarrow SS\\
+		S &\rightarrow bb
+	\end{aligned}
+\end{equation*}
+
 
 \section{Задача 4}
 
