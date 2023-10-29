@@ -1,0 +1,148 @@
+\documentclass[a4paper, 14pt]{article}
+
+\usepackage[T2A]{fontenc}
+\usepackage[utf8]{inputenc}
+\usepackage[english, main=russian]{babel}
+
+\usepackage{amsmath}
+
+\usepackage{tikz} 
+\usetikzlibrary{automata, positioning}
+
+\tikzset{
+->,
+node distance=2.5cm, % specifies the minimum distance between two nodes. Change if necessary.
+every state/.style={thick, fill=gray!10}, % sets the properties for each ’state’ node
+initial text=$ $, % sets the text that appears on the start arrow
+}
+%
+\begin{document}
+
+
+
+\tableofcontents 
+
+\newpage
+
+\section{Задача 1}
+
+Определить регулярность языка $L = \{w \ \Big\vert \mid w \mid_{aba} = \mid w \mid_{ab}  \& \ w \in \{a, b, c\}^{*} \}$
+
+\subsection{Решение}
+
+\begin{figure}[ht] 
+	\centering 
+
+	\begin{tikzpicture}
+		\node[state, initial, accepting] (q0) {0};
+		\node[state, accepting, right of=q0] (q3) {c};
+		\node[state, accepting, above of=q3] (q1) {a};
+		\node[state, accepting, below of=q3] (q2) {b};
+		\node[state, accepting, right of=q3] (q6) {aba};
+		\node[state, accepting, below right of=q6] (q4) {ba};
+		\node[state, right of=q1] (q5) {ab};
+		
+		\draw (q0) edge[above] node{a} (q1)
+			  (q0) edge[below] node{b} (q2)
+			  (q0) edge[above] node{c} (q3)
+			  (q1) edge[loop above] node{a} (q1)
+			  (q1) edge[left, bend right] node{c} (q3)
+			  (q1) edge[above, bend left] node{b} (q5)
+			  (q2) edge[loop below] node{b} (q2)
+			  (q2) edge[right, bend right] node{c} (q3)
+			  (q2) edge[below] node{a} (q4)
+			  (q3) edge[right, bend right] node{a} (q1)
+			  (q3) edge[left, bend right] node{b} (q2)
+			  (q3) edge[loop right] node{c} (q3)
+			  (q4) edge[right, bend right] node{b} (q5)
+			  (q4) edge[loop below] node{a} (q4)
+			  (q5) edge[left, bend left] node{a} (q6)
+			  (q6) edge[left, bend left] node{b} (q5)
+			  (q6) edge[below, bend left] node{c} (q3)
+			  (q6) edge[loop below] node{a} ();
+			  
+			  % (q2) (q3)
+	\end{tikzpicture}
+	\caption{Автомат для языка $L$}
+	\label{fig:task_automata}
+\end{figure}
+
+Т.к. удалось построить автомат, то язык регулярный.
+
+
+\section{Задача 2}
+Проанализировать язык истинных выражений, представляющих собой утверждение вида $N_1 + N_2 > N_0$, где $N_0$, $N_1$ и $N_2$ - двоичные числа.
+
+
+\section{Задача 3}
+
+Определить, описывает ли данная грамматика регулярный язык 
+
+\begin{equation*}
+	\begin{aligned}[t]
+		S &\rightarrow STSa\\  
+		S &\rightarrow SS\\
+		S &\rightarrow bb
+	\end{aligned}
+	\qquad \ \qquad
+	\begin{aligned}[t]
+		T &\rightarrow a\\
+		T &\rightarrow b\\
+		T &\rightarrow TT\\
+	\end{aligned}
+\end{equation*}
+
+\newpage
+
+\section{Задача 4}
+
+Пусть $h(w)$ - слово, получающееся из $w$ удвоением каждой буквы. Например, $h(aba^2) = a^{2}b^{2}a^{4}$. Запишем эти слова друг под другом так, чтобы первые буквы $w$ и $h(w)$ образовали пару, вторые - следующую за ней, и т.д. Недостающуую длину в $w$ дополним "решетками".
+
+Исследовать язык пар слов $(w, h(w))$, поступающих на вход анализатора разбитыми таким образом на пары букв, т.е. поступающих параллельно (т.е. элементы входного алфавита - вектора
+$
+\begin{pmatrix}
+	w_i\\
+	v_i
+\end{pmatrix}
+$ 
+, где $w_i, v_i \in \{a, b, \# \}$
+). 
+
+В нашем примере вход анализатора будет представлять собой следующую последовательность пар:
+
+$$
+\begin{pmatrix}
+	a\\
+	a
+\end{pmatrix}
+\begin{pmatrix}
+	b\\
+	a
+\end{pmatrix}
+\begin{pmatrix}
+	a\\
+	b	
+\end{pmatrix}
+\begin{pmatrix}
+	a\\
+	b	
+\end{pmatrix}
+\begin{pmatrix}
+	\#\\
+	a	
+\end{pmatrix}
+\begin{pmatrix}
+	\#\\
+	a	
+\end{pmatrix}
+\begin{pmatrix}
+	\#\\
+	a	
+\end{pmatrix}
+\begin{pmatrix}
+	\#\\
+	a	
+\end{pmatrix}
+$$
+
+\end{document}
