@@ -10,6 +10,8 @@
 \usetikzlibrary{automata, positioning}
 
 
+\usepackage{qtree}
+
 
 \usepackage{enumitem}
 \setlist[enumerate]{label*=\arabic*.}
@@ -118,9 +120,6 @@ $$
 w =  11^n + 11^n00^n > 11^{2n}0
 $$
 
-$$
-$$
-
 
 Здесь $N_1 = 11^n$, $N_2 = 11^n00^n$, $N_3 = 11^{2n}0$.
 Пусть задана $n$ - длина накачки. Возьмем описанное вышел слово, длина которого > $n$.
@@ -199,7 +198,119 @@ $$
 
 $$((a|b)^{+}(bb)^{+}((bb)^{*}(a|b)^{+}a)^{+} | (bb)^{+})^{+}$$
 
+
+\begin{figure}[ht] 
+	\centering 
+
+
+\begin{tikzpicture}[level distance=2cm,
+                    level 1/.style={sibling distance=5cm},
+                    level 2/.style={sibling distance=10cm}]
+
+  \node[rectangle ,draw] {$S$}
+	child {
+		node[rectangle, draw] {$(a|b)^{+}S(a|b)^{+}a$}
+	}
+	child {
+		node[rectangle, draw] {$SS$}
+	}
+	child {
+		node[rectangle, draw] {$bb$}
+	};
+
+\end{tikzpicture}
+	\caption{Дерево преобразования}
+	\label{tree:main}
+\end{figure}
+
+\newpage
+
+Рассмотрим, что будет при раскрытии по правилу из крайнему левого листа
+
+
+\begin{figure}[ht] 
+	\centering 
+
+
+\begin{tikzpicture}[level distance=2cm,
+                    level 1/.style={sibling distance=5cm},
+                    level 2/.style={sibling distance=10cm}]
+
+  \node[rectangle ,draw] {$(a|b)^{+}S(a|b)^{+}a$}
+	child {
+		node[rectangle, draw] {$(a|b)^{+}(a|b)^{+}S(a|b)^{+}a(a|b)^{+}a$}
+	}
+	child {
+		node[rectangle, draw] {$(a|b)^{+}SS(a|b)^{+}a$}
+	}
+	child {
+		node[rectangle, draw] {$(a|b)^{+}bb(a|b)^{+}a$}
+	};
+
+
+	
+
+\end{tikzpicture}
+\end{figure}
+
+Если будет применяться только левое правило, то получим следующее:
+
+\begin{figure}[ht] 
+	\centering 
+
+
+\begin{tikzpicture}[level distance=2cm,
+                    level 1/.style={sibling distance=5.8cm},
+                    level 2/.style={sibling distance=8cm}]
+
+  \node[rectangle ,draw] {$(a|b)^{+}(a|b)^{+}S(a|b)^{+}a(a|b)^{+}a$}
+	child {
+		node[rectangle, draw] {$(a|b)^{+}(a|b)^{+}(a|b)^{+}S(a|b)^{+}a(a|b)^{+}a(a|b)^{+}a$} 
+		child {
+			node[rectangle, draw] {$\dots$} 
+			child {
+				node[rectangle, draw] {$(a|b)^{+}\ldots(a|b)^{+}S(a|b)^{+}a\ldots(a|b)^{+}a$}
+				child {
+					node[rectangle, draw] {$(a|b)^{+}\ldots(a|b)^{+}bb(a|b)^{+}a\ldots(a|b)^{+}a$}
+				}
+			}
+		}
+	}
+	child {
+		node[rectangle, draw] {$\dots$} 
+	}
+	child {
+		node[rectangle, draw] {$\dots$} 
+	};
+
+\end{tikzpicture}
+\end{figure}
+
+Таким образом, при использовании этого правило слева будет накапливаться $(a|b)^{+}$, справа $(a|b)^{+}a$, а в середине $bb$. Строки полученные таким образом удовлетворяют регулярному выражению. 
+
+Допустим, что в какой-то момент, было применено правило из второго листа рисунок \ref{tree:main}. Тогда получаем следующее
+
+
+\begin{figure}[ht] 
+	\centering 
+
+
+\begin{tikzpicture}[level distance=2cm,
+                    level 1/.style={sibling distance=5.8cm},
+                    level 2/.style={sibling distance=8cm}]
+
+  \node[rectangle ,draw] {$(a|b)^{+}\ldots(a|b)^{+}SS(a|b)^{+}a\ldots(a|b)^{+}a$} 
+	child {
+		node[rectangle, draw] {$(a|b)^{+}\ldots(a|b)^{+}Sbb(a|b)^{+}a\ldots(a|b)^{+}a$}  
+	};
+
+
+\end{tikzpicture}
+\end{figure}
+
+
 \newpage 
+
 
 \section{Задача 4}
 
