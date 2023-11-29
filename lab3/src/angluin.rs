@@ -151,16 +151,8 @@ impl AngluinWorker {
         self.update_extended_table();
 
         loop {
-            let mut completeness_breaker = None;
-            let mut consistency_breaker = None;
-            if let Some(pref) = self.check_completeness() {
-                completeness_breaker = Some(pref);
-            }
-
-            if let Some(suff) = self.check_consistency() {
-                consistency_breaker = Some(suff);
-            }
-
+            let completeness_breaker = self.check_completeness();
+            let consistency_breaker = self.check_consistency();
             if completeness_breaker.is_none() && consistency_breaker.is_none() {
                 let dfa = self.generate_dfa();
                 let tmp = self.mat.equivalence(&dfa);
@@ -186,7 +178,7 @@ impl AngluinWorker {
             self.update_extended_table();
         }
     }
-	
+
     fn generate_dfa(&self) -> DFA {
         unimplemented!();
     }
