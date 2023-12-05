@@ -1,13 +1,19 @@
-use std::collections::{HashMap, HashSet};
+#![feature(bitvec, bitset)]
 
 use crate::{dfa::DFA, mat::MAT};
+use std::collections::{BTreeMap, BTreeSet, HashMap, HashSet};
+
+#[derive(Debug)]
+struct TableElem {
+    val: String,
+}
 
 struct AngluinWorker {
     symbols: Vec<char>,
     mat: Box<dyn MAT>,
-    suffix_set: HashSet<String>,
-    prefix_set: HashSet<String>,
-    extended_prefix_set: HashSet<String>,
+    suffix_set: BTreeSet<String>,
+    prefix_set: BTreeSet<String>,
+    extended_prefix_set: BTreeSet<String>,
     table: HashMap<(String, String), bool>,
     extended_table: HashMap<(String, String), bool>,
 }
@@ -19,9 +25,9 @@ impl AngluinWorker {
             mat,
             table: HashMap::new(),
             extended_table: HashMap::new(),
-            suffix_set: HashSet::new(),
-            prefix_set: HashSet::new(),
-            extended_prefix_set: HashSet::new(),
+            suffix_set: BTreeSet::new(),
+            prefix_set: BTreeSet::new(),
+            extended_prefix_set: BTreeSet::new(),
         }
     }
 
@@ -137,6 +143,34 @@ impl AngluinWorker {
         }
     }
 
+    fn add_new_prefix(&mut self, pref: &str) {
+        self.prefix_set.insert(pref.to_string());
+        for suf in self.suffix_set.iter() {
+            self.table.insert(
+                (pref.to_string(), suf.to_string()),
+                self.mat.membership(&format!("{}{}", pref, suf)),
+            );
+        }
+    }
+
+    fn add_new_suffix(&mut self, suff: &str) {
+        self.suffix_set.insert(suff.to_string());
+
+        for pref in self.prefix_set.iter() {
+            self.table.insert(
+                (pref.to_string(), suff.to_string()),
+                self.mat.membership(&format!("{}{}", pref, suff)),
+            );
+        }
+
+        for pref in self.extended_prefix_set.iter() {
+            self.extended_table.insert(
+                (pref.to_string(), suff.to_string()),
+                self.mat.membership(&format!("{}{}", pref, suff)),
+            );
+        }
+    }
+
     pub fn run(&mut self) -> DFA {
         self.extended_table.clear();
         self.table.clear();
@@ -160,26 +194,59 @@ impl AngluinWorker {
                     Ok(_) => return dfa,
                     Err(contrexample) => {
                         for i in 1..contrexample.len() + 1 {
-                            self.prefix_set.insert(contrexample[0..i].to_string());
+                            self.add_new_prefix(&contrexample[0..i]);
                         }
                     }
                 }
             } else {
                 if let Some(pref) = completeness_breaker {
-                    self.prefix_set.insert(pref);
+                    self.add_new_prefix(&pref);
                 }
 
                 if let Some(suff) = consistency_breaker {
-                    self.suffix_set.insert(suff);
+                    self.add_new_suffix(&suff);
                 }
             }
-
-            self.update_table();
             self.update_extended_table();
         }
     }
 
     fn generate_dfa(&self) -> DFA {
-        unimplemented!();
+        let mut result = DFA::new(&vec![], &HashMap::new(), 0, &self.symbols);
+        let mut prefixes_sorted_by_len = self.prefix_set.iter().cloned().collect::<Vec<String>>();
+        let mut states = HashMap::new();
+
+        prefixes_sorted_by_len.sort_by(|lhs, rhs| lhs.len().cmp(&rhs.len()));
+
+        let mut row_to_pref = HashMap::new();
+        let mut pref_to_row = HashMap::new();
+
+        let mut j = 0;
+        for pref in prefixes_sorted_by_len.iter() {
+            let mut row = fixedbitset::FixedBitSet::with_capacity(self.suffix_set.len());
+            let mut i = 0;
+            for suff in self.suffix_set.iter() {
+                row.set(i, self.table[&(pref.to_owned(), suff.to_owned())]);
+                i += 1;
+            }
+
+            if !row_to_pref.get(&row).is_none() {
+                states.insert(pref, j);
+                row_to_pref.insert(row.clone(), pref.clone());
+                pref_to_row.insert(pref.clone(), row);
+                j += 1;
+            }
+        }
+
+        for (pref, i) in states.iter() {
+            for c in self.symbols.iter() {
+                let tmp = format!("{}{}", pref, c);
+                if pref_to_row.get(&tmp).is_some() {
+                    result.add_transition(*i, states[&tmp], *c);
+                }
+            }
+        }
+
+        return result;
     }
 }
