@@ -7,9 +7,9 @@ import Text.Parsec.Char
 import Text.ParserCombinators.Parsec
 
 data DotAttribute = DotAttribute String String deriving Show
-newtype DotEntity = DotEntity [String] deriving Show
+type DotEntity = [String]
 data DotStatement = DotStatement DotEntity (Maybe DotAttribute) deriving Show
-newtype DotGraph = DotGraph [DotStatement] deriving Show
+type DotGraph = [DotStatement]
 
 parseGraph =
     do
@@ -17,12 +17,11 @@ parseGraph =
         char '{'
         sl <- parseStatementList
         char '}'
-        return $ DotGraph sl
+        return sl
 
 
 parseStatementList = endBy parseStatement (char ';')
 
-parseStatement :: GenParser Char st DotStatement
 parseStatement =
     do 
         spaces
@@ -31,10 +30,7 @@ parseStatement =
         return $ DotStatement e a
 
 parseEntity :: GenParser Char st DotEntity
-parseEntity =
-    do
-        ns <- sepBy parseNode (string "->" >> spaces)
-        return $ DotEntity ns
+parseEntity = sepBy parseNode (string "->" >> spaces)
 
 parseNode =
     do
@@ -44,11 +40,10 @@ parseNode =
 
 parseAttribute = 
     do
-        spaces
-        char '['
-        an <- many $ noneOf "="
-        char '='
-        av <- many $ noneOf "]"
-        char ']'
+        spaces >> char '[' >> spaces
+        an <- many $ noneOf "= "
+        spaces >> char '=' >> spaces
+        av <- many $ noneOf "] "
+        spaces >> char ']'
         return $ Just $ DotAttribute an av
     <|> return Nothing
