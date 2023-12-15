@@ -49,7 +49,6 @@ dotToAutomata dg = undefined
         dotGraphToAutomata (ds:dss) a =
             dotGraphToAutomata dss $
             dotStatementToAutomata ds a
-            
 
         dotStatementToAutomata :: DotStatement -> Automata -> Automata
         dotStatementToAutomata (DotStatement ns attr) a = 
@@ -68,7 +67,7 @@ dotToAutomata dg = undefined
                         (transitions a)
                     where
                         nc = read n :: Int
-                ([n1, n2], Just (DotAttribute "" t)) ->
+                ([n1, n2], Just (DotAttribute "label" t)) ->
                     Automata
                         (Set.insert n1c $ states a)
                         (Set.insert n1c $ finalStates a)

@@ -2,34 +2,62 @@ cabal-version: 2.4
 name: app
 version: 0.1.0.0
 
-executable app
-    main-is: Main.hs
+library uma-dot
+    exposed-modules: Dot
+    hs-source-dirs: src
     build-depends:
           base ^>=4.17.2.0
-        , containers ^>=0.6.7
         , parsec ^>=3.1.16.1
-    other-modules:
-          Dot
-        , Automata
+    default-language: Haskell2010
+
+library uma-automata
+    exposed-modules: Automata
+    other-modules: Dot
+    hs-source-dirs: src
+    build-depends:
+          base ^>=4.17.2.0
+        , parsec ^>=3.1.16.1
+        , uma-dot
+        , containers ^>=0.6.7
+    default-language: Haskell2010
+
+executable app
+    main-is: Main.hs
+    other-modules: Automata, Dot
+    build-depends:
+          base ^>=4.17.2.0
+        , parsec ^>=3.1.16.1
+        , uma-dot
+        , containers ^>=0.6.7
+        , uma-automata
     hs-source-dirs: src
     default-language: Haskell2010
 
-Test-Suite dot-parser
+Test-Suite dot_test
     type: exitcode-stdio-1.0
-    main-is: Dot.hs
+    main-is: tests/DotTest.hs
+    other-modules: Paths_app
+    autogen-modules: Paths_app
     build-depends:
           base ^>=4.17.2.0
+        , filepath
         , test-framework
-        , test-framework-quickcheck2
-        , QuickCheck ^>=2.14.3
-    hs-source-dirs: testsuite/tests
+        , test-framework-hunit
+        , HUnit
+        , uma-dot
+    hs-source-dirs: testsuite
+    data-files:
+          testsuite/data/graph.dot
+        , testsuite/data/incorrect-graph.dot
+    default-language: Haskell2010
 
-Test-Suite automata
+Test-Suite automata_test
     type: exitcode-stdio-1.0
-    main-is: Automata.hs
+    main-is: tests/AutomataTest.hs
     build-depends:
           base ^>=4.17.2.0
         , test-framework
         , test-framework-quickcheck2
         , QuickCheck ^>=2.14.3
-    hs-source-dirs: testsuite/tests
+    hs-source-dirs: testsuite
+    default-language: Haskell2010
