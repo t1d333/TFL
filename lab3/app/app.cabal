@@ -21,19 +21,32 @@ library uma-automata
         , containers ^>=0.6.7
     default-language: Haskell2010
 
-executable app
-    main-is: Main.hs
-    other-modules: Automata, Dot
+library uma-affixes
+    exposed-modules: Affixes
+    other-modules: Automata
+    hs-source-dirs: src
     build-depends:
           base ^>=4.17.2.0
         , parsec ^>=3.1.16.1
         , uma-dot
         , containers ^>=0.6.7
         , uma-automata
+    default-language: Haskell2010
+
+executable app
+    main-is: Main.hs
+    other-modules: Automata, Dot, Affixes
+    build-depends:
+          base ^>=4.17.2.0
+        , parsec ^>=3.1.16.1
+        , uma-dot
+        , containers ^>=0.6.7
+        , uma-automata
+        , uma-affixes
     hs-source-dirs: src
     default-language: Haskell2010
 
-Test-Suite dot_test
+Test-Suite dot-test
     type: exitcode-stdio-1.0
     main-is: tests/DotTest.hs
     other-modules: Paths_app
@@ -51,7 +64,7 @@ Test-Suite dot_test
         , testsuite/data/incorrect-graph.dot
     default-language: Haskell2010
 
-Test-Suite automata_test
+Test-Suite automata-test
     type: exitcode-stdio-1.0
     main-is: tests/AutomataTest.hs
     build-depends:
