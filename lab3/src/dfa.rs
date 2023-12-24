@@ -53,7 +53,7 @@ impl DFA {
         self.final_states.contains(&curr_state)
     }
 
-    pub fn add_transition(&mut self, lhs_state: i32, rhs_state: i32, symbol: char, ) {
+    pub fn add_transition(&mut self, lhs_state: i32, rhs_state: i32, symbol: char) {
         self.transitions.insert((lhs_state, symbol), rhs_state);
     }
 
