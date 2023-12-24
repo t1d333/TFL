@@ -1,14 +1,7 @@
-#![feature(bitvec, bitset)]
-
 use crate::{dfa::DFA, mat::MAT};
-use std::collections::{BTreeMap, BTreeSet, HashMap, HashSet};
+use std::collections::{BTreeSet, HashMap};
 
-#[derive(Debug)]
-struct TableElem {
-    val: String,
-}
-
-struct AngluinWorker {
+pub struct AngluinWorker {
     symbols: Vec<char>,
     mat: Box<dyn MAT>,
     suffix_set: BTreeSet<String>,
@@ -19,7 +12,7 @@ struct AngluinWorker {
 }
 
 impl AngluinWorker {
-    fn new(symbols: &[char], mat: Box<dyn MAT>) -> Self {
+    pub fn new(symbols: &[char], mat: Box<dyn MAT>) -> Self {
         Self {
             symbols: symbols.to_owned(),
             mat,
@@ -36,7 +29,7 @@ impl AngluinWorker {
             let mut counter = self.prefix_set.len();
             for pref in self.prefix_set.iter() {
                 for suff in self.suffix_set.iter() {
-                    if self.extended_table[&(pref.to_string(), suff.to_string())]
+                    if self.table[&(pref.to_string(), suff.to_string())]
                         != self.extended_table[&(extended_pref.to_string(), suff.to_string())]
                     {
                         counter -= 1;
@@ -70,7 +63,7 @@ impl AngluinWorker {
     fn check_consistency(&self) -> Option<String> {
         for pref_u in self.extended_prefix_set.iter() {
             for pref_v in self.extended_prefix_set.iter() {
-                if pref_v == pref_u || !pref_v.len() == pref_u.len() {
+                if pref_v == pref_u || pref_v.len() != pref_u.len() {
                     continue;
                 }
 
@@ -103,9 +96,6 @@ impl AngluinWorker {
     }
 
     fn update_extended_table(&mut self) {
-        self.extended_prefix_set.clear();
-        self.extended_table.clear();
-
         self.prefix_set
             .clone()
             .into_iter()
@@ -125,17 +115,6 @@ impl AngluinWorker {
         for pref in self.extended_prefix_set.iter() {
             for suff in self.suffix_set.iter() {
                 self.extended_table.insert(
-                    (pref.to_string(), suff.to_string()),
-                    self.mat.membership(&format!("{}{}", pref, suff)),
-                );
-            }
-        }
-    }
-
-    fn update_table(&mut self) {
-        for pref in self.prefix_set.iter() {
-            for suff in self.suffix_set.iter() {
-                self.table.insert(
                     (pref.to_string(), suff.to_string()),
                     self.mat.membership(&format!("{}{}", pref, suff)),
                 );
@@ -185,6 +164,11 @@ impl AngluinWorker {
         self.update_extended_table();
 
         loop {
+            println!("===========");
+            println!("{:?}", self.prefix_set);
+            println!("{:?}", self.extended_prefix_set);
+            println!("{:?}", self.suffix_set);
+
             let completeness_breaker = self.check_completeness();
             let consistency_breaker = self.check_consistency();
             if completeness_breaker.is_none() && consistency_breaker.is_none() {
@@ -193,6 +177,8 @@ impl AngluinWorker {
                 match tmp {
                     Ok(_) => return dfa,
                     Err(contrexample) => {
+                        println!("{}", contrexample);
+                        println!("{}", dfa);
                         for i in 1..contrexample.len() + 1 {
                             self.add_new_prefix(&contrexample[0..i]);
                         }
@@ -213,6 +199,11 @@ impl AngluinWorker {
 
     fn generate_dfa(&self) -> DFA {
         let mut result = DFA::new(&vec![], &HashMap::new(), 0, &self.symbols);
+
+        if self.table[&("".to_string(), "".to_string())] {
+            result.add_final_state(0);
+        }
+
         let mut prefixes_sorted_by_len = self.prefix_set.iter().cloned().collect::<Vec<String>>();
         let mut states = HashMap::new();
 
@@ -222,6 +213,7 @@ impl AngluinWorker {
         let mut pref_to_row = HashMap::new();
 
         let mut j = 0;
+
         for pref in prefixes_sorted_by_len.iter() {
             let mut row = fixedbitset::FixedBitSet::with_capacity(self.suffix_set.len());
             let mut i = 0;
@@ -230,13 +222,14 @@ impl AngluinWorker {
                 i += 1;
             }
 
-            if !row_to_pref.get(&row).is_none() {
+            if row_to_pref.get(&row).is_none() {
                 states.insert(pref, j);
                 row_to_pref.insert(row.clone(), pref.clone());
                 pref_to_row.insert(pref.clone(), row);
                 j += 1;
             }
         }
+        // println!("{:?}", states);
 
         for (pref, i) in states.iter() {
             for c in self.symbols.iter() {
@@ -244,6 +237,12 @@ impl AngluinWorker {
                 if pref_to_row.get(&tmp).is_some() {
                     result.add_transition(*i, states[&tmp], *c);
                 }
+            }
+        }
+
+        for (pref, i) in states.iter() {
+            if self.table[&(pref.to_string(), "".to_string())] {
+                result.add_final_state(*i);
             }
         }
 

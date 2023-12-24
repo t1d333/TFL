@@ -1,22 +1,24 @@
-use std::collections::HashMap;
-
-use dfa::DFA;
-use mat::MAT;
-
+use clap::Parser;
+use mat::ScriptMAT;
 pub mod angluin;
 pub mod dfa;
 pub mod mat;
 
+#[derive(Parser)]
+pub struct Cli {
+    // Alphabet of the language specified by the oracle
+    symbols: String,
+    // Path to oracle
+    oracle: String,
+}
+
 fn main() {
-    let mut t = HashMap::new();
+    let cli = Cli::parse();
 
-    t.insert((0, 'b'), 1);
-    t.insert((0, 'a'), 0);
-    t.insert((1, 'b'), 1);
+    let mat = ScriptMAT::new(&cli.oracle);
+    let symbols = cli.symbols.chars().collect::<Vec<char>>();
 
-    let d = DFA::new(&[1], &t, 0, &['a', 'b', 'c']);
-
-    for _ in 0..10 {
-        println!("{}", d.gen_random_valid_word(10));
-    }
+    let mut worker = angluin::AngluinWorker::new(&symbols, Box::new(mat));
+    let dfa = worker.run();
+    println!("{}", dfa);
 }
