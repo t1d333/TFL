@@ -63,6 +63,25 @@ initial text=$ $, % sets the text that appears on the start arrow
 \subsection{Решение}
 
 
+Замечания:
+
+\begin{enumerate}
+  \item Любое не пустое слово содержит хотя бы одну $a$
+  \item Буквы $a$ могут только уменьшаться
+  \item $|w|_a \leq |w|_b + |w|_c$
+  \item Можно бесконечно двигать влево самую первую букву $a$
+  \item Слова могут начинаться только с $b^i a^k$, где $k > 0$
+  \item Применение правила 3 ограничивает сдвиг тех $a$, которые находились правее буквы $a$, к которой было применено правило.
+  \item При появлении ол
+  
+
+
+    
+\end{enumerate}
+
+$$w = b^{i_0}a^{p_1}c^{k_1}b^{i_1}a^{p_2}c^{k_2}b^{i_2}a^{p_3}c^{k_3}b^{i_3}\ldots a^{p_r}c^{k_r}b^{i_r}a^{p_{r + 1}}, p_1 \geq 1 $$
+
+\[ \sum_{m=1}^{r + 1}{p_m} \leq \sum_{m=0}^{r}{i_m} +  \sum_{m=1}^{r}{k_m}\]
 
 \newpage 
 \section{Задача 2}
@@ -94,7 +113,6 @@ $$
   &[S] \rightarrow [Regexp] &;  \quad  \\
   &[Regexp] \rightarrow [Regexp][Regexp] &; \quad  &{Regexp_{1}.val \neq \varepsilon, Regexp_{2}.val \neq \varepsilon} \\
   & & \quad &{Regexp_{0}.val \coloneqq Regexp_{1}.val ++ Regexp_{2}.val}\\
-  % &[Regexp] \rightarrow [Regexp][Regexp] &; \quad   \\ 
   &[Regexp] \rightarrow ([Regexp]|[Regexp]) &; \quad &{Regexp_{1}.val \neq \varepsilon \lor Regexp_{2}.val \neq \varepsilon}, \\
   & & \quad &{Regexp_{1}.val \neq |}, Regexp_{0}.val \coloneqq | \\
   &[Regexp] \rightarrow ([Regexp])* &; \quad &{Regexp_{1}.val \neq \varepsilon}\\
@@ -109,7 +127,7 @@ $$
 
 \subsection{Решение}
 
-Рассмотрим подвыражения, которые запрещены согласно ограничениям налагаемым условиями на аттрибуты:
+Рассмотрим подвыражения, которые запрещены согласно ограничениям налагаемым условиями на аттрибут:
 
 \begin{enumerate}
   \item{$(\varepsilon | \varepsilon)$}
