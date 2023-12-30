@@ -7,10 +7,9 @@ fn main() {
     for line in stdin().lines() {
         grammar_s = format!("{}\n{}", grammar_s, line.unwrap());
     }
-    grammar_s.trim();
     let g = grammar::Grammar::new(grammar_s);
     let parser = parser::Parser::new(g);
 
-    parser.parse("");
-    // println!("{:?}", g);
+    // parser.parse("");
+    println!("{:#?}", parser);
 }

@@ -5,7 +5,11 @@ use crate::grammar::Grammar;
 #[derive(Debug)]
 pub struct Parser {
     grammar: Grammar,
-    max_len: i32,
+    max_len: usize,
+    first: HashMap<String, HashSet<String>>,
+    follow: HashMap<String, HashSet<String>>,
+    action: Vec<String>,
+    goto: Vec<String>,
 }
 
 impl Parser {
@@ -15,10 +19,33 @@ impl Parser {
             grammar.start, grammar.start, grammar.grammar_str
         );
 
-        Self {
-            grammar: Grammar::new(tmp_grammar),
-            max_len: 0,
+        let grammar = Grammar::new(tmp_grammar);
+        let mut max_len = 0;
+        for bodies in grammar.grammar.values() {
+            for body in bodies {
+                if body.len() > max_len {
+                    max_len = body.len()
+                }
+            }
         }
+
+        let mut res = Self {
+            first: HashMap::new(),
+            follow: HashMap::new(),
+            action: grammar.terminals.clone().into_iter().collect(),
+            goto: grammar.non_terminals.clone().into_iter().collect(),
+            max_len,
+            grammar,
+        };
+
+        res.goto.retain(|symbol| symbol.ne(&res.grammar.start));
+
+        let first_and_follow = res.find_first_and_follow();
+
+        res.first = first_and_follow.0;
+        res.follow = first_and_follow.1;
+
+        return res;
     }
 
     fn union(&self, lhs: &HashSet<String>, rhs: &mut HashSet<String>) -> bool {
@@ -39,7 +66,10 @@ impl Parser {
 
         for c in &self.grammar.symbols {
             let mut set = HashSet::new();
-            set.insert(c.clone());
+            if self.grammar.terminals.contains(c) {
+                set.insert(c.clone());
+            }
+
             first.insert(c.clone(), set);
         }
 
@@ -61,6 +91,7 @@ impl Parser {
                                 &first.get(&symbol.to_string()).unwrap().clone(),
                                 first.get_mut(head).unwrap(),
                             );
+                        break;
                     }
 
                     let mut aux = follow[head].clone();
