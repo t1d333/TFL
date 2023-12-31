@@ -11,5 +11,5 @@ fn main() {
     let parser = parser::Parser::new(g);
 
     // parser.parse("");
-    println!("{:#?}", parser);
+    // println!("{:#?}", parser);
 }
