@@ -10,12 +10,16 @@ pub struct Cli {
     symbols: String,
     // Path to oracle
     oracle: String,
+    // Max word len for equivalence check
+    max_len: usize,
+    // Max word len for equivalence check
+    try_count: usize,
 }
 
 fn main() {
     let cli = Cli::parse();
 
-    let mat = ScriptMAT::new(&cli.oracle);
+    let mat = ScriptMAT::new(&cli.oracle, cli.symbols.clone(), cli.max_len, cli.try_count);
     let symbols = cli.symbols.chars().collect::<Vec<char>>();
 
     let mut worker = angluin::AngluinWorker::new(&symbols, Box::new(mat));

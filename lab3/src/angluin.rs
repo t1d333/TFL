@@ -1,5 +1,8 @@
 use crate::{dfa::DFA, mat::MAT};
-use std::collections::{BTreeSet, HashMap};
+use std::{
+    cmp::Ordering,
+    collections::{BTreeSet, HashMap},
+};
 
 pub struct AngluinWorker {
     symbols: Vec<char>,
@@ -63,20 +66,20 @@ impl AngluinWorker {
     fn check_consistency(&self) -> Option<String> {
         for pref_u in self.extended_prefix_set.iter() {
             for pref_v in self.extended_prefix_set.iter() {
-                if pref_v == pref_u || pref_v.len() != pref_u.len() {
-                    continue;
-                }
+                let u_len = pref_u.len();
+                let v_len = pref_v.len();
 
-                let l = pref_u.len();
-
-                if pref_u.as_bytes()[l - 1] != pref_v.as_bytes()[l - 1] {
+                if pref_v == pref_u
+                    || pref_u.as_bytes()[u_len - 1] != pref_v.as_bytes()[v_len - 1]
+                    || pref_u[0..u_len - 1] == pref_v[0..v_len - 1]
+                {
                     continue;
                 }
 
                 if self
                     .check_prefixes_consistency(
-                        &pref_u[0..l - 1].to_string(),
-                        &pref_v[0..l - 1].to_string(),
+                        &pref_u[0..u_len - 1].to_string(),
+                        &pref_v[0..v_len - 1].to_string(),
                         &self.table,
                     )
                     .is_some()
@@ -87,7 +90,7 @@ impl AngluinWorker {
                 if let Some(mut suff) =
                     self.check_prefixes_consistency(pref_u, pref_v, &self.extended_table)
                 {
-                    suff.insert(0, pref_v.chars().nth(l - 1).unwrap());
+                    suff.insert(0, pref_v.chars().nth(v_len - 1).unwrap());
                     return Some(suff);
                 }
             }
@@ -96,14 +99,17 @@ impl AngluinWorker {
     }
 
     fn update_extended_table(&mut self) {
+        self.extended_table.clear();
+        self.extended_prefix_set.clear();
+
         self.prefix_set
             .clone()
             .into_iter()
-            .filter(|pref| {
-                self.prefix_set
-                    .iter()
-                    .all(|p| pref.eq(p) || !p.starts_with(pref))
-            })
+            // .filter(|pref| {
+            //     self.prefix_set
+            //         .iter()
+            //         .all(|p| pref.eq(p) || !p.starts_with(pref))
+            // })
             .for_each(|pref| {
                 for c in self.symbols.iter() {
                     let mut tmp = pref.clone();
@@ -164,21 +170,15 @@ impl AngluinWorker {
         self.update_extended_table();
 
         loop {
-            println!("===========");
-            println!("{:?}", self.prefix_set);
-            println!("{:?}", self.extended_prefix_set);
-            println!("{:?}", self.suffix_set);
-
             let completeness_breaker = self.check_completeness();
             let consistency_breaker = self.check_consistency();
             if completeness_breaker.is_none() && consistency_breaker.is_none() {
                 let dfa = self.generate_dfa();
                 let tmp = self.mat.equivalence(&dfa);
+
                 match tmp {
                     Ok(_) => return dfa,
                     Err(contrexample) => {
-                        println!("{}", contrexample);
-                        println!("{}", dfa);
                         for i in 1..contrexample.len() + 1 {
                             self.add_new_prefix(&contrexample[0..i]);
                         }
@@ -205,9 +205,11 @@ impl AngluinWorker {
         }
 
         let mut prefixes_sorted_by_len = self.prefix_set.iter().cloned().collect::<Vec<String>>();
+        let mut suffixes_sorted_by_len = self.suffix_set.iter().cloned().collect::<Vec<String>>();
         let mut states = HashMap::new();
 
-        prefixes_sorted_by_len.sort_by(|lhs, rhs| lhs.len().cmp(&rhs.len()));
+        prefixes_sorted_by_len.sort_by(|lhs, rhs| self.str_cmp(lhs, rhs));
+        suffixes_sorted_by_len.sort_by(|lhs, rhs| self.str_cmp(lhs, rhs));
 
         let mut row_to_pref = HashMap::new();
         let mut pref_to_row = HashMap::new();
@@ -215,27 +217,21 @@ impl AngluinWorker {
         let mut j = 0;
 
         for pref in prefixes_sorted_by_len.iter() {
-            let mut row = fixedbitset::FixedBitSet::with_capacity(self.suffix_set.len());
-            let mut i = 0;
-            for suff in self.suffix_set.iter() {
-                row.set(i, self.table[&(pref.to_owned(), suff.to_owned())]);
-                i += 1;
-            }
-
+            let row = self.get_row(pref, &suffixes_sorted_by_len, &self.table);
             if row_to_pref.get(&row).is_none() {
                 states.insert(pref, j);
                 row_to_pref.insert(row.clone(), pref.clone());
-                pref_to_row.insert(pref.clone(), row);
+                pref_to_row.insert(pref, row);
                 j += 1;
             }
         }
-        // println!("{:?}", states);
 
         for (pref, i) in states.iter() {
             for c in self.symbols.iter() {
                 let tmp = format!("{}{}", pref, c);
-                if pref_to_row.get(&tmp).is_some() {
-                    result.add_transition(*i, states[&tmp], *c);
+                let row = self.get_row(&tmp, &suffixes_sorted_by_len, &self.extended_table);
+                if let Some(p) = row_to_pref.get(&row) {
+                    result.add_transition(*i, states[p], *c);
                 }
             }
         }
@@ -247,5 +243,34 @@ impl AngluinWorker {
         }
 
         return result;
+    }
+
+    fn get_row(
+        &self,
+        pref: &str,
+        suffixes: &Vec<String>,
+        table: &HashMap<(String, String), bool>,
+    ) -> fixedbitset::FixedBitSet {
+        let mut row = fixedbitset::FixedBitSet::with_capacity(suffixes.len());
+        for (i, suff) in suffixes.iter().enumerate() {
+            if table.contains_key(&(pref.to_string(), suff.to_string())) {
+                row.set(i, table[&(pref.to_string(), suff.to_string())]);
+            } else {
+                // let mut word = pref.to_string();
+                // word.push_str(suff);
+                // row.set(i, self.mat.membership(&word));
+            }
+        }
+        return row;
+    }
+
+    fn str_cmp(&self, lhs: &str, rhs: &str) -> Ordering {
+        if lhs.len() < rhs.len() {
+            return Ordering::Less;
+        } else if lhs.len() == rhs.len() {
+            return lhs.cmp(rhs);
+        } else {
+            return Ordering::Greater;
+        }
     }
 }
