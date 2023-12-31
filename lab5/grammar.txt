@@ -1,3 +1,5 @@
-S -> ( S )
-S -> S S
-S -> ( )
+E -> E + T
+E -> T
+T -> T * F | F
+F -> ( E )
+F -> id

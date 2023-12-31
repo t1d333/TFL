@@ -1,7 +1,6 @@
 use std::{
     char,
     collections::{HashMap, HashSet},
-    result, usize, vec,
 };
 
 use crate::grammar::Grammar;
@@ -9,7 +8,6 @@ use crate::grammar::Grammar;
 #[derive(Debug)]
 pub struct Parser {
     grammar: Grammar,
-    max_len: usize,
     first: HashMap<String, HashSet<String>>,
     follow: HashMap<String, HashSet<String>>,
     action: Vec<String>,
@@ -36,21 +34,11 @@ impl Parser {
             }
         }
 
-        let mut max_len = 0;
-        for bodies in grammar.grammar.values() {
-            for body in bodies {
-                if body.len() > max_len {
-                    max_len = body.len()
-                }
-            }
-        }
-
         let mut res = Self {
             first: HashMap::new(),
             follow: HashMap::new(),
             action: grammar.terminals.clone().into_iter().collect(),
             goto: grammar.non_terminals.clone().into_iter().collect(),
-            max_len,
             grammar,
             table_symbols: vec![],
             items: vec![],
@@ -70,14 +58,10 @@ impl Parser {
 
         res.build_table();
 
-        // for (i, _) in res.items.iter().enumerate() {
-        //     let mut line = format!("{} ", i);
-        //     for symbol in &res.table_symbols {
-        //         line = format!("{} ({}, {})", line, symbol, res.table[&(i, symbol.clone())]);
-        //     }
-        //     println!("{}", line);
-        // }
-        res.print_parsing_automata();
+        let automata = res.gen_parsing_automata();
+        println!("PARSING AUTOMATA:");
+        println!("{}\n", automata);
+        res.print_table();
         return res;
     }
 
@@ -88,6 +72,26 @@ impl Parser {
         old_len != rhs.len()
     }
 
+    fn print_table(&self) {
+        println!("PARSING TABLE:");
+        print!("{:<6}", "");
+        for s in &self.table_symbols {
+            print!("| {:<10}", s);
+        }
+        println!(
+            "\n{:-<width$}",
+            "",
+            width = (self.table_symbols.len() + 1) * 12
+        );
+        for (i, _) in self.items.iter().enumerate() {
+            print!("{:<5} |", i);
+            for s in self.table_symbols.iter() {
+                print!("{:<10} |", self.table[&(i, s.clone())]);
+            }
+            println!();
+        }
+        println!();
+    }
     fn find_first_and_follow(&mut self) {
         let mut first: HashMap<String, HashSet<String>> = HashMap::new();
         let mut follow: HashMap<String, HashSet<String>> = HashMap::new();
@@ -312,33 +316,13 @@ impl Parser {
         self.table = table;
     }
 
-    //     digraph D {
-    // 	rankdir=LR
-    //
-    // 	node [shape = doublecircle]; 1;
-    // 	init [label="", shape=point]
-    // 	init -> 0
-    // 	node [shape = circle];
-    // 	0 -> 0 [label = "a"];
-    // 	0 -> 1 [label = "b"];
-    // 	1 -> 1 [label = "a"];
-    // 	1 -> 2 [label = "c"];
-    // 	2 -> 2 [label = "a"];
-    // 	2 -> 2 [label = "b"];
-    // 	0 -> 1 [label = "c"];
-    // 	2 -> 2 [label = "c"];
-    // 	1 -> 2 [label = "b"];
-    // }
-
-    pub fn print_parsing_automata(&self) {
-        let mut out =
-            "digraph D {\n\t rankdir=LR\n\tinit [label=\"\", shape=point]\n\tinit -> 0".to_string();
-        // let mut accepting_states = "node [shape = doublecircle];";
+    pub fn gen_parsing_automata(&self) -> String {
+        let mut out = "digraph D {\n\tinit [label=\"\", shape=point]\n\tinit -> 0".to_string();
         for (i, item) in self.items.iter().enumerate() {
             let mut label = "[label=\"".to_string();
             for (head, bodies) in item {
                 for body in bodies {
-                    label = format!("{}\\n{} -> {}", label, head, body.join(""));
+                    label = format!("{}{} -> {}\\n", label, head, body.join(""));
                 }
             }
             label.push_str("\"]");
@@ -372,8 +356,7 @@ impl Parser {
             }
         }
 
-        out = format!("{}\n}}", out);
-        println!("{}", out);
+        format!("{}\n}}", out)
     }
 
     pub fn parse(&self, input: &str) -> bool {
