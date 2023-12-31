@@ -1,6 +1,7 @@
 use std::{
+    char,
     collections::{HashMap, HashSet},
-    result, vec,
+    result, usize, vec,
 };
 
 use crate::grammar::Grammar;
@@ -16,6 +17,7 @@ pub struct Parser {
     table_symbols: Vec<String>,
     items: Vec<HashMap<String, HashSet<Vec<String>>>>,
     indexed_grammar: Vec<(String, Vec<String>)>,
+    table: HashMap<(usize, String), String>,
 }
 
 impl Parser {
@@ -52,9 +54,11 @@ impl Parser {
             grammar,
             table_symbols: vec![],
             items: vec![],
-            indexed_grammar: vec![],
+            indexed_grammar,
+            table: HashMap::new(),
         };
 
+        res.action.push("$".to_string());
         res.goto.retain(|symbol| symbol.ne(&res.grammar.start));
 
         res.table_symbols.extend(res.action.clone());
@@ -64,6 +68,16 @@ impl Parser {
 
         res.generate_items();
 
+        res.build_table();
+
+        // for (i, _) in res.items.iter().enumerate() {
+        //     let mut line = format!("{} ", i);
+        //     for symbol in &res.table_symbols {
+        //         line = format!("{} ({}, {})", line, symbol, res.table[&(i, symbol.clone())]);
+        //     }
+        //     println!("{}", line);
+        // }
+        res.print_parsing_automata();
         return res;
     }
 
@@ -229,7 +243,7 @@ impl Parser {
         }
     }
 
-    fn construct_table(&self) {
+    fn build_table(&mut self) {
         let mut table = HashMap::new();
 
         for i in 0..self.items.len() {
@@ -244,6 +258,9 @@ impl Parser {
                     if body.contains(&".".to_string()) && body.last().unwrap().ne(".") {
                         let pos = body.iter().position(|c| c.eq(".")).unwrap() + 1;
                         let symbol = &body[pos];
+                        if !self.grammar.terminals.contains(symbol) {
+                            continue;
+                        }
                         let action = format!(
                             "s{}",
                             self.items
@@ -252,7 +269,7 @@ impl Parser {
                                 .unwrap()
                         );
 
-                        let mut cell = table[&(i, symbol.clone())].clone();
+                        let cell = table.get_mut(&(i, symbol.clone())).unwrap();
                         if !cell.contains(&action) {
                             if cell.contains("r") {
                                 cell.push_str("/");
@@ -260,11 +277,103 @@ impl Parser {
                             cell.push_str(&action);
                         }
                     } else if body.last().unwrap().eq(".") && head.ne(&self.grammar.start) {
+                        for (j, (tmp_head, tmp_body)) in self.indexed_grammar.iter().enumerate() {
+                            let mut body_without_dot = body.clone();
+                            body_without_dot.pop();
+                            if tmp_head.eq(head) && body_without_dot.eq(tmp_body) {
+                                for f in &self.follow[head] {
+                                    let cell = table.get_mut(&(i, f.clone())).unwrap();
+                                    if cell.len() != 0 {
+                                        cell.push_str("/");
+                                    }
+                                    cell.push_str(&format!("r{}", j));
+                                }
+                                break;
+                            }
+                        }
                     } else {
+                        table.insert((i, "$".to_string()), "acc".to_string());
                     }
                 }
             }
+            for t in &self.grammar.non_terminals {
+                let j = self.goto(item, t);
+                if self.items.contains(&j) {
+                    table.insert(
+                        (i, t.clone()),
+                        format!(
+                            "{}",
+                            self.items.iter().position(|item| item.eq(&j)).unwrap()
+                        ),
+                    );
+                }
+            }
         }
+        self.table = table;
+    }
+
+    //     digraph D {
+    // 	rankdir=LR
+    //
+    // 	node [shape = doublecircle]; 1;
+    // 	init [label="", shape=point]
+    // 	init -> 0
+    // 	node [shape = circle];
+    // 	0 -> 0 [label = "a"];
+    // 	0 -> 1 [label = "b"];
+    // 	1 -> 1 [label = "a"];
+    // 	1 -> 2 [label = "c"];
+    // 	2 -> 2 [label = "a"];
+    // 	2 -> 2 [label = "b"];
+    // 	0 -> 1 [label = "c"];
+    // 	2 -> 2 [label = "c"];
+    // 	1 -> 2 [label = "b"];
+    // }
+
+    pub fn print_parsing_automata(&self) {
+        let mut out =
+            "digraph D {\n\t rankdir=LR\n\tinit [label=\"\", shape=point]\n\tinit -> 0".to_string();
+        // let mut accepting_states = "node [shape = doublecircle];";
+        for (i, item) in self.items.iter().enumerate() {
+            let mut label = "[label=\"".to_string();
+            for (head, bodies) in item {
+                for body in bodies {
+                    label = format!("{}\\n{} -> {}", label, head, body.join(""));
+                }
+            }
+            label.push_str("\"]");
+            out = format!("{}\n\t{} {}", out, i, label);
+        }
+
+        out = format!("{}\n\taccept [label=\"accept\", shape=doublecircle]", out);
+
+        for (i, _) in self.items.iter().enumerate() {
+            for symbol in self.table_symbols.iter() {
+                if let Ok(n) = self.table[&(i, symbol.clone())].parse::<usize>() {
+                    out = format!("{}\n\t{} -> {} [label=\"{}\"]", out, i, n, symbol);
+                } else if self.table[&(i, symbol.clone())].contains("s") {
+                    let cell = self.table[&(i, symbol.clone())].clone();
+                    let pos = cell.chars().into_iter().position(|c| c.eq(&'s')).unwrap() + 1;
+                    let mut chars: Vec<char> = cell.chars().into_iter().skip(pos).collect();
+                    if chars.contains(&'/') {
+                        let slash_pos = chars.iter().position(|c| c.eq(&'/')).unwrap();
+                        chars = chars[..slash_pos].to_vec();
+                    }
+
+                    let state = chars
+                        .iter()
+                        .fold("".to_string(), |acc, c| format!("{}{}", acc, c));
+                    if let Ok(n) = state.parse::<usize>() {
+                        out = format!("{}\n\t{} -> {} [label=\"{}\"]", out, i, n, symbol);
+                    }
+                } else if self.table[&(i, symbol.clone())].eq("acc") {
+                    out = format!("{}\n\t{} -> accept [label=\"{}\"]", out, i, "$");
+                }
+            }
+        }
+
+        out = format!("{}\n}}", out);
+        println!("{}", out);
     }
 
     pub fn parse(&self, input: &str) -> bool {
