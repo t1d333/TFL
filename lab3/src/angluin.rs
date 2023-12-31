@@ -102,21 +102,13 @@ impl AngluinWorker {
         self.extended_table.clear();
         self.extended_prefix_set.clear();
 
-        self.prefix_set
-            .clone()
-            .into_iter()
-            // .filter(|pref| {
-            //     self.prefix_set
-            //         .iter()
-            //         .all(|p| pref.eq(p) || !p.starts_with(pref))
-            // })
-            .for_each(|pref| {
-                for c in self.symbols.iter() {
-                    let mut tmp = pref.clone();
-                    tmp.push(*c);
-                    self.extended_prefix_set.insert(tmp);
-                }
-            });
+        self.prefix_set.clone().into_iter().for_each(|pref| {
+            for c in self.symbols.iter() {
+                let mut tmp = pref.clone();
+                tmp.push(*c);
+                self.extended_prefix_set.insert(tmp);
+            }
+        });
 
         for pref in self.extended_prefix_set.iter() {
             for suff in self.suffix_set.iter() {
