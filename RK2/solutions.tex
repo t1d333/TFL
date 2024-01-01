@@ -138,9 +138,34 @@ $$
   \item{$((\cdot \ | \ \cdot )\ | \ \cdot)$}
   \item{$(\varepsilon)*$}
   \item{$((\cdot)*)*$}
-    
-  
 \end{enumerate}
 
+Для исключения подслов вида 1, 2 введем три новых нетерминала, и вместо правила $[Regexp] \rightarrow ([Regexp]|[Regexp])$ введем правило $[Regexp] \rightarrow [Regexp']$
+
+$$
+\begin{aligned}
+  &[Regexp'] &\rightarrow \quad &{(\varepsilon|[Regexp_{rhs}])} & &[Regexp_{lhs}] &\rightarrow \quad &{[Regexp_{lhs}][Regexp_{lhs}]} \\
+  &[Regexp'] &\rightarrow \quad &{([Regexp_{lhs}]|\varepsilon)} & &[Regexp_{lhs}] &\rightarrow \quad  &{[Regexp_{iter}]} \\
+  &[Regexp_{rhs}] &\rightarrow \quad &{[Regexp']} & &[Regexp_{lhs}] &\rightarrow \quad  &a\\ 
+  &[Regexp_{rhs}] &\rightarrow \quad &{[Regexp_{iter}]} & &[Regexp_{lhs}] &\rightarrow \quad  &b\\ 
+  &[Regexp_{rhs}] &\rightarrow \quad &{[Regexp_{rhs}][Regexp_{rhs}]} \\
+  &[Regexp_{rhs}] &\rightarrow \quad &a \\
+  &[Regexp_{rhs}] &\rightarrow \quad &b
+\end{aligned}
+$$
+
+
+
+
+
+Для того, чтобы исключить выражения вида 3, 4 введем новый нетерминал $Regexp_{iter}$
+$$
+\begin{aligned}
+  [Regexp_{iter}] &\rightarrow [Regexp'] \\
+  [Regexp_{iter}] &\rightarrow [Regexp_{iter}][Regexp_{iter}] \\
+  [Regexp_{iter}] &\rightarrow a \\
+  [Regexp_{iter}] &\rightarrow b
+\end{aligned}
+$$
 
 \end{document}
