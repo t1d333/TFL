@@ -175,8 +175,9 @@ $$
   &[Regexp] &\rightarrow \quad &{[Regexp_{iter}]} & &[Regexp_{iter}] &\rightarrow \quad &b\\
   &[Regexp'] &\rightarrow \quad &{(\varepsilon|[Regexp_{rhs}])} & &[Regexp_{lhs}] &\rightarrow \quad &{[Regexp_{lhs}][Regexp_{lhs}]} \\
   &[Regexp'] &\rightarrow \quad &{([Regexp_{lhs}]|\varepsilon)} & &[Regexp_{lhs}] &\rightarrow \quad  &{[Regexp_{iter}]} \\
-  &[Regexp_{rhs}] &\rightarrow \quad &{[Regexp']} & &[Regexp_{lhs}] &\rightarrow \quad  &a\\ 
-  &[Regexp_{rhs}] &\rightarrow \quad &{[Regexp_{iter}]} & &[Regexp_{lhs}] &\rightarrow \quad  &b\\ 
+  &[Regexp'] &\rightarrow \quad &{([Regexp_{lhs}]|[Regexp_{rhs})} & &[Regexp_{lhs}] &\rightarrow \quad  &a \\
+  &[Regexp_{rhs}] &\rightarrow \quad &{[Regexp']} & &[Regexp_{lhs}] &\rightarrow \quad  &b \\ 
+  &[Regexp_{rhs}] &\rightarrow \quad &{[Regexp_{iter}]} \\ 
   &[Regexp_{rhs}] &\rightarrow \quad &{[Regexp_{rhs}][Regexp_{rhs}]} \\
   &[Regexp_{rhs}] &\rightarrow \quad &a \\
   &[Regexp_{rhs}] &\rightarrow \quad &b \\
