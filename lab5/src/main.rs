@@ -1,5 +1,6 @@
 pub mod grammar;
 pub mod parser;
+pub mod stack;
 use std::io::stdin;
 
 fn main() {
@@ -10,6 +11,9 @@ fn main() {
     let g = grammar::Grammar::new(grammar_s);
     let parser = parser::Parser::new(g);
 
-    // parser.parse("");
-    // println!("{:#?}", parser);
+    if let Err(msg) = parser.parse("id") {
+        println!("Parsing error: {}", msg);
+    } else {
+        println!("accepted");
+    }
 }

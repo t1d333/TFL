@@ -4,6 +4,7 @@ use std::{
 };
 
 use crate::grammar::Grammar;
+use crate::stack::Stack;
 
 #[derive(Debug)]
 pub struct Parser {
@@ -114,23 +115,22 @@ impl Parser {
 
         loop {
             let mut updated = false;
-
             for (head, bodies) in self.grammar.grammar.iter() {
                 for body in bodies {
-                    let symbol = &body[0];
-                    updated = updated
-                        || self.union(
-                            &first.get(&symbol.to_string()).unwrap().clone(),
-                            first.get_mut(head).unwrap(),
-                        );
+                    let flag = self.union(
+                        &first.get(&body[0].to_string()).unwrap().clone(),
+                        first.get_mut(head).unwrap(),
+                    );
+                    updated = flag || updated;
 
                     let mut aux = follow[head].clone();
                     for symbol in body.iter().rev() {
                         if follow.contains_key(symbol) {
-                            updated = updated || self.union(&aux, follow.get_mut(symbol).unwrap());
-                        } else {
-                            aux = first[symbol].clone();
+                            let flag = self.union(&aux, follow.get_mut(symbol).unwrap());
+                            updated = updated || flag;
                         }
+
+                        aux = first[symbol].clone();
                     }
                 }
             }
@@ -359,7 +359,151 @@ impl Parser {
         format!("{}\n}}", out)
     }
 
-    pub fn parse(&self, input: &str) -> bool {
-        false
+    fn do_shift(&self, state: usize, symbol: &str, stack_pos: usize, stack: &mut Stack) {
+        let new_state = self.table[&(state, symbol.to_string())]
+            .chars()
+            .skip(1)
+            .collect::<String>()
+            .parse::<usize>()
+            .unwrap();
+        stack.push(symbol, new_state, stack_pos);
+    }
+
+    fn do_reduce(&self, state: usize, symbol: &str, stack_pos: usize, stack: &mut Stack) {
+        let rule_number = self.table[&(state, symbol.to_string())]
+            .chars()
+            .skip(1)
+            .collect::<String>()
+            .parse::<usize>()
+            .unwrap();
+        let (head, body) = &self.indexed_grammar[rule_number];
+
+        for _ in 0..(body.len()) {
+            stack.pop(stack_pos);
+        }
+        let top = stack.top(stack_pos);
+        let new_state = self.table[&(top.state, head.clone())]
+            .parse::<usize>()
+            .unwrap();
+        stack.push(head, new_state, stack_pos);
+    }
+
+    pub fn parse(&self, input: &str) -> Result<(), String> {
+        let stream: Vec<String> = format!("{} $", input)
+            .split(" ")
+            .map(|s| s.to_string())
+            .collect();
+        let mut stack = Stack::new("", 0);
+        let mut positions = vec![0];
+        let mut curr_symbols = vec![stream[0].clone()];
+
+        loop {
+            println!("{}", stack.get_alived().len());
+            for i in stack.get_alived() {
+                let pos = positions[i];
+                let symbol = curr_symbols[i].clone();
+                let curr_top = stack.top(i);
+                if self.grammar.terminals.get(&symbol).is_none() && symbol.ne("$") {
+                    return Err(format!("Unrecognized symbol in position {}", pos));
+                } else if self.table[&(curr_top.state, symbol.to_string())].eq("") {
+                    println!("{} {:?} {}", symbol, stack, i);
+                    stack.remove_root(i);
+                    continue;
+                } else if self.table[&(curr_top.state, symbol.to_string())].contains("/") {
+                    let splited: Vec<_> = self.table[&(curr_top.state, symbol.to_string())]
+                        .split("/")
+                        .collect();
+                    if self.table[&(curr_top.state, symbol.to_string())].contains("s") {
+                        let idx = splited.iter().position(|s| s.contains("s")).unwrap();
+                        let shift_state = splited[idx]
+                            .chars()
+                            .skip(1)
+                            .collect::<String>()
+                            .parse::<usize>()
+                            .unwrap();
+
+                        let idx = stack.add_new_root(i);
+                        if positions.len() <= idx {
+                            positions.resize(2 * idx + 1, 0);
+                            curr_symbols.resize(2 * idx + 1, "".to_string());
+                        }
+                        stack.push(&symbol, shift_state, idx);
+                        positions[idx] = pos + 1;
+                        curr_symbols[idx] = stream[pos + 1].clone();
+                    }
+
+                    for item in splited {
+                        if item.starts_with("s") {
+                            continue;
+                        }
+
+                        let idx = stack.add_new_root(i);
+                        if positions.len() <= idx {
+                            positions.resize(2 * idx + 1, 0);
+                            curr_symbols.resize(2 * idx + 1, "".to_string());
+                        }
+
+                        positions[idx] = pos;
+                        curr_symbols[idx] = stream[pos].to_string();
+
+                        let rule_number = item
+                            .chars()
+                            .skip(1)
+                            .collect::<String>()
+                            .parse::<usize>()
+                            .unwrap();
+                        let (head, body) = &self.indexed_grammar[rule_number];
+
+                        // println!("============={:?}=========", stack);
+                        for _ in 0..(body.len()) {
+                            stack.pop(idx);
+                        }
+
+                        let top = stack.top(idx);
+                        let new_state = self.table[&(top.state, head.clone())]
+                            .parse::<usize>()
+                            .unwrap();
+                        stack.push(head, new_state, idx);
+
+                        // self.do_reduce(curr_top.state, &symbol, idx, &mut stack)
+                    }
+                    stack.remove_root(i);
+                } else if self.table[&(curr_top.state, symbol.to_string())].starts_with("s") {
+                    // let new_state = self.table[&(curr_top.state, symbol.to_string())]
+                    //     .chars()
+                    //     .skip(1)
+                    //     .collect::<String>()
+                    //     .parse::<usize>()
+                    //     .unwrap();
+                    // stack.push(symbol, new_state, i);
+                    self.do_shift(curr_top.state, &symbol, i, &mut stack);
+                    positions[i] += 1;
+                    curr_symbols[i] = stream[positions[i]].clone();
+                } else if self.table[&(curr_top.state, symbol.to_string())].starts_with("r") {
+                    // let rule_number = self.table[&(curr_top.state, symbol.to_string())]
+                    //     .chars()
+                    //     .skip(1)
+                    //     .collect::<String>()
+                    //     .parse::<usize>()
+                    //     .unwrap();
+                    // let (head, body) = &self.indexed_grammar[rule_number];
+                    //
+                    // for _ in 0..(body.len()) {
+                    //     stack.pop(i);
+                    // }
+                    // let top = stack.top(i);
+                    // let new_state = self.table[&(top.state, head.clone())]
+                    //     .parse::<usize>()
+                    //     .unwrap();
+                    // stack.push(head, new_state, i);
+                    self.do_reduce(curr_top.state, &symbol, i, &mut stack);
+                } else if self.table[&(curr_top.state, symbol.to_string())].eq("acc") {
+                    return Ok(());
+                }
+            }
+            if stack.get_alived().is_empty() {
+                return Err("Input is not recognized by this grammar".to_string());
+            }
+        }
     }
 }

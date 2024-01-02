@@ -19,7 +19,7 @@ impl Grammar {
         let mut symbols: HashSet<String>;
         let mut start = "".to_string();
 
-        for p in grammar_str.split('\n') {
+        for p in grammar_str.split('\n').collect::<Vec<_>>() {
             let tmp = p.split(" -> ").collect::<Vec<&str>>();
             assert_eq!(tmp.len(), 2);
             let head = tmp[0];
@@ -33,10 +33,10 @@ impl Grammar {
                 start = head.to_string();
             }
 
-            non_terminals.insert(head.to_string());
-            if let None = grammar.get(head) {
+            if !non_terminals.contains(head) {
                 grammar.insert(head.to_string(), HashSet::new());
             }
+            non_terminals.insert(head.to_string());
 
             let bodies = body.split('|').map(|s| s.trim());
             for b in bodies {
@@ -47,6 +47,9 @@ impl Grammar {
 
                 for symbol in splited {
                     if symbol.chars().all(|c| c.is_uppercase()) {
+                        if !non_terminals.contains(&symbol) {
+                            grammar.insert(symbol.to_string(), HashSet::new());
+                        }
                         non_terminals.insert(symbol.to_string());
                     } else {
                         terminals.insert(symbol.to_string());
