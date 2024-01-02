@@ -423,14 +423,14 @@ impl Parser {
         loop {
             println!("STACK STATE ON STEP №{} {}", step, stack);
             step += 1;
-            let mut min_pos = 0;
+            let mut min_pos = usize::MAX;
             for i in stack.get_alived() {
                 let curr_top = stack.top(i);
                 let state = curr_top.0.state;
                 let pos = curr_top.1;
                 let symbol = stream[pos].clone();
 
-                if min_pos == 0 || pos < min_pos {
+                if pos < min_pos {
                     min_pos = pos;
                 }
                 if self.grammar.terminals.get(&symbol).is_none() && symbol.ne("$") {
