@@ -19,6 +19,7 @@ pub struct Parser {
     table: HashMap<(usize, String), String>,
 }
 
+
 impl Parser {
     pub fn new(grammar: Grammar) -> Self {
         let tmp_grammar = format!(
@@ -355,17 +356,31 @@ impl Parser {
         format!("{}\n}}", out)
     }
 
-    fn do_shift(&self, state: usize, symbol: &str, stack_pos: usize, stack: &mut Stack) {
+    fn do_shift(
+        &self,
+        state: usize,
+        symbol: &str,
+        stack_pos: usize,
+        word_pointer: usize,
+        stack: &mut Stack,
+    ) {
         let new_state = self.table[&(state, symbol.to_string())]
             .chars()
             .skip(1)
             .collect::<String>()
             .parse::<usize>()
             .unwrap();
-        stack.push(symbol, new_state, stack_pos);
+        stack.push(symbol, new_state, stack_pos, word_pointer);
     }
 
-    fn do_reduce(&self, state: usize, symbol: &str, stack_pos: usize, stack: &mut Stack) {
+    fn do_reduce(
+        &self,
+        state: usize,
+        symbol: &str,
+        stack_pos: usize,
+        word_pointer: usize,
+        stack: &mut Stack,
+    ) {
         let rule_number = self.table[&(state, symbol.to_string())]
             .chars()
             .skip(1)
@@ -378,10 +393,10 @@ impl Parser {
             stack.pop(stack_pos);
         }
         let top = stack.top(stack_pos);
-        let new_state = self.table[&(top.state, head.clone())]
+        let new_state = self.table[&(top.0.state, head.clone())]
             .parse::<usize>()
             .unwrap();
-        stack.push(head, new_state, stack_pos);
+        stack.push(head, new_state, stack_pos, word_pointer);
     }
 
     pub fn parse(&self, input: &str) -> Result<(), String> {
@@ -389,28 +404,26 @@ impl Parser {
             .split(" ")
             .map(|s| s.to_string())
             .collect();
-        let mut stack = Stack::new("", 0);
-        let mut positions = vec![0];
-        let mut curr_symbols = vec![stream[0].clone()];
-
+        let mut stack = Stack::new("", 0, 0);
         let mut step = 0;
         loop {
-            println!("STACK STATE ON STEP №{} {}", step,stack);
+            println!("STACK STATE ON STEP №{} {}", step, stack);
             step += 1;
             for i in stack.get_alived() {
-                let pos = positions[i];
-                let symbol = curr_symbols[i].clone();
                 let curr_top = stack.top(i);
+                let state = curr_top.0.state;
+                let pos = curr_top.1;
+                let symbol = stream[pos].clone();
                 if self.grammar.terminals.get(&symbol).is_none() && symbol.ne("$") {
                     return Err(format!("Unrecognized symbol in position {}", pos));
-                } else if self.table[&(curr_top.state, symbol.to_string())].eq("") {
+                } else if self.table[&(state, symbol.to_string())].eq("") {
                     stack.remove_root(i);
                     continue;
-                } else if self.table[&(curr_top.state, symbol.to_string())].contains("/") {
-                    let splited: Vec<_> = self.table[&(curr_top.state, symbol.to_string())]
+                } else if self.table[&(state, symbol.to_string())].contains("/") {
+                    let splited: Vec<_> = self.table[&(state, symbol.to_string())]
                         .split("/")
                         .collect();
-                    if self.table[&(curr_top.state, symbol.to_string())].contains("s") {
+                    if self.table[&(state, symbol.to_string())].contains("s") {
                         let idx = splited.iter().position(|s| s.contains("s")).unwrap();
                         let shift_state = splited[idx]
                             .chars()
@@ -420,13 +433,7 @@ impl Parser {
                             .unwrap();
 
                         let idx = stack.add_new_root(i);
-                        if positions.len() <= idx {
-                            positions.resize(2 * idx + 1, 0);
-                            curr_symbols.resize(2 * idx + 1, "".to_string());
-                        }
-                        stack.push(&symbol, shift_state, idx);
-                        positions[idx] = pos + 1;
-                        curr_symbols[idx] = stream[pos + 1].clone();
+                        stack.push(&symbol, shift_state, idx, pos + 1);
                     }
 
                     for item in splited {
@@ -435,14 +442,6 @@ impl Parser {
                         }
 
                         let idx = stack.add_new_root(i);
-                        if positions.len() <= idx {
-                            positions.resize(2 * idx + 1, 0);
-                            curr_symbols.resize(2 * idx + 1, "".to_string());
-                        }
-
-                        positions[idx] = pos;
-                        curr_symbols[idx] = stream[pos].to_string();
-
                         let rule_number = item
                             .chars()
                             .skip(1)
@@ -456,19 +455,17 @@ impl Parser {
                         }
 
                         let top = stack.top(idx);
-                        let new_state = self.table[&(top.state, head.clone())]
+                        let new_state = self.table[&(top.0.state, head.clone())]
                             .parse::<usize>()
                             .unwrap();
-                        stack.push(head, new_state, idx);
+                        stack.push(head, new_state, idx, pos);
                     }
                     stack.remove_root(i);
-                } else if self.table[&(curr_top.state, symbol.to_string())].starts_with("s") {
-                    self.do_shift(curr_top.state, &symbol, i, &mut stack);
-                    positions[i] += 1;
-                    curr_symbols[i] = stream[positions[i]].clone();
-                } else if self.table[&(curr_top.state, symbol.to_string())].starts_with("r") {
-                    self.do_reduce(curr_top.state, &symbol, i, &mut stack);
-                } else if self.table[&(curr_top.state, symbol.to_string())].eq("acc") {
+                } else if self.table[&(state, symbol.to_string())].starts_with("s") {
+                    self.do_shift(state, &symbol, i, pos + 1, &mut stack);
+                } else if self.table[&(state, symbol.to_string())].starts_with("r") {
+                    self.do_reduce(state, &symbol, i, pos, &mut stack);
+                } else if self.table[&(state, symbol.to_string())].eq("acc") {
                     return Ok(());
                 }
             }
