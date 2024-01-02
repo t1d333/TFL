@@ -59,10 +59,6 @@ impl Parser {
 
         res.build_table();
 
-        let automata = res.gen_parsing_automata();
-        println!("PARSING AUTOMATA:");
-        println!("{}\n", automata);
-        res.print_table();
         return res;
     }
 
@@ -73,7 +69,7 @@ impl Parser {
         old_len != rhs.len()
     }
 
-    fn print_table(&self) {
+    pub fn print_table(&self) {
         println!("PARSING TABLE:");
         print!("{:<6}", "");
         for s in &self.table_symbols {
@@ -397,8 +393,10 @@ impl Parser {
         let mut positions = vec![0];
         let mut curr_symbols = vec![stream[0].clone()];
 
+        let mut step = 0;
         loop {
-            println!("{}", stack.get_alived().len());
+            println!("STACK STATE ON STEP №{} {}", step,stack);
+            step += 1;
             for i in stack.get_alived() {
                 let pos = positions[i];
                 let symbol = curr_symbols[i].clone();
@@ -406,7 +404,6 @@ impl Parser {
                 if self.grammar.terminals.get(&symbol).is_none() && symbol.ne("$") {
                     return Err(format!("Unrecognized symbol in position {}", pos));
                 } else if self.table[&(curr_top.state, symbol.to_string())].eq("") {
-                    println!("{} {:?} {}", symbol, stack, i);
                     stack.remove_root(i);
                     continue;
                 } else if self.table[&(curr_top.state, symbol.to_string())].contains("/") {

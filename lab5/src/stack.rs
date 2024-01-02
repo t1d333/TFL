@@ -1,4 +1,8 @@
-use std::{rc::Rc, vec};
+use std::{
+    fmt::Display,
+    rc::Rc,
+    vec,
+};
 
 #[derive(Debug, Clone)]
 pub struct StackNodeData {
@@ -97,5 +101,31 @@ impl Stack {
             }
         });
         result
+    }
+}
+
+impl Display for Stack {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        let mut result = format!("ALIVE ROOTS COUNT: {}", self.get_alived().len());
+
+        for (i, node) in self.buffer.iter().enumerate() {
+            let mut tmp = node.clone();
+
+            if tmp.is_some() {
+                result = format!("{}\nSTACK NUMBER {}: ", result, i);
+            }
+
+            while let Some(curr) = tmp {
+                result = format!(
+                    "{} (STATE: {}, SYMBOL: \"{}\")",
+                    result, curr.data.state, curr.data.symbol
+                );
+                tmp = curr.prev.clone();
+            }
+        }
+
+        result = format!("{}\n", result);
+
+        write!(f, "{}", result)
     }
 }
