@@ -454,7 +454,6 @@ impl Parser {
                             .unwrap();
                         let (head, body) = &self.indexed_grammar[rule_number];
 
-                        // println!("============={:?}=========", stack);
                         for _ in 0..(body.len()) {
                             stack.pop(idx);
                         }
@@ -464,38 +463,13 @@ impl Parser {
                             .parse::<usize>()
                             .unwrap();
                         stack.push(head, new_state, idx);
-
-                        // self.do_reduce(curr_top.state, &symbol, idx, &mut stack)
                     }
                     stack.remove_root(i);
                 } else if self.table[&(curr_top.state, symbol.to_string())].starts_with("s") {
-                    // let new_state = self.table[&(curr_top.state, symbol.to_string())]
-                    //     .chars()
-                    //     .skip(1)
-                    //     .collect::<String>()
-                    //     .parse::<usize>()
-                    //     .unwrap();
-                    // stack.push(symbol, new_state, i);
                     self.do_shift(curr_top.state, &symbol, i, &mut stack);
                     positions[i] += 1;
                     curr_symbols[i] = stream[positions[i]].clone();
                 } else if self.table[&(curr_top.state, symbol.to_string())].starts_with("r") {
-                    // let rule_number = self.table[&(curr_top.state, symbol.to_string())]
-                    //     .chars()
-                    //     .skip(1)
-                    //     .collect::<String>()
-                    //     .parse::<usize>()
-                    //     .unwrap();
-                    // let (head, body) = &self.indexed_grammar[rule_number];
-                    //
-                    // for _ in 0..(body.len()) {
-                    //     stack.pop(i);
-                    // }
-                    // let top = stack.top(i);
-                    // let new_state = self.table[&(top.state, head.clone())]
-                    //     .parse::<usize>()
-                    //     .unwrap();
-                    // stack.push(head, new_state, i);
                     self.do_reduce(curr_top.state, &symbol, i, &mut stack);
                 } else if self.table[&(curr_top.state, symbol.to_string())].eq("acc") {
                     return Ok(());
