@@ -1,22 +1,21 @@
 \documentclass[a4paper, 14pt]{article}
-
-\usepackage[T2A]{fontenc}
-\usepackage[utf8]{inputenc}
+\usepackage[T2A]{fontenc} \usepackage[utf8]{inputenc}
 \usepackage[english, main=russian]{babel}
 
 \usepackage{amsmath}
-
+\usepackage{amsfonts}
 \usepackage{tikz} 
-\usetikzlibrary{automata, positioning}
-
+\usetikzlibrary{automata, positioning, arrows}
 \usepackage{mathtools}
-
+\usepackage{graphicx}
+\usepackage{float}
 \usepackage{enumitem}
 \setlist[enumerate]{label*=\arabic*.}
 
 \tikzset{
 ->,
-node distance=2.5cm, % specifies the minimum distance between two nodes. Change if necessary.
+>=stealth',
+node distance=4.5cm, % specifies the minimum distance between two nodes. Change if necessary.
 every state/.style={thick, fill=gray!10}, % sets the properties for each ’state’ node
 initial text=$ $, % sets the text that appears on the start arrow
 }
@@ -72,18 +71,146 @@ initial text=$ $, % sets the text that appears on the start arrow
   \item Можно бесконечно двигать влево самую первую букву $a$
   \item Слова могут начинаться только с $b^i a^k$, где $k > 0$
   \item Применение правила 3 ограничивает сдвиг тех $a$, которые находились правее буквы $a$, к которой было применено правило.
-  \item При появлении ол
-  
-
 
     
+Начальное количество букв $a$ и $b$ равно, далее количество исходных $b$ может либо остаться таким же, либо с помощью правила 3 некоторые $b$, могут перейти в $c$, но суммарное количество $b$ и $c$ останется равным $n$. Буквы $a$ могут быть переписаны с помощью правила 2, и их количество станет меньше $n$. Каждой буквой $a$ с помощью первого и третьего правил могут порождаться некоторые блоки, в которых количество букв $b$ и $c$ сбалансированно, т.к. правило 1 порождает блоки вида $b^k a b^k$, в которых количество букв $b$ сбалансированно. Поэтому при построении PDA стоит ввести два стековых символа, первый будет использовать для подсчета исходных $b$ и букв $c$, полученных из этих букв $b$. Второй символ необходим для проверки баланса букв $b$ и $c$, которые были пораждены с помощью повторения правил 2, 3. Также этот блок может содержать один внутренний блок такой же структуры, из-за наличия правила 3, тогда исходный блок должен заканчиваться на $c^r$, после чтения которых в стеке должны оставаться лишь символы первого вида.
+
+
+
+% b^3n a b^n b^2n c
+% b^3n a b^n b^2n c - это слово не накачивается во втором случае, если брать суффикс b^3n a b^n 
+% b^3n a b^n b^n a b^2n a^3n-2   - это слово не накачивается во втором случае, если брать суффикс b^3n a b^n 
+% b^2n a c^2n a^4n-1 
+
+% b^2n b^n a b^n a
+% b^2n a c^n  b^n a
+
+
+% a c
+% b^4n a a
+% b^2n a c^2n a
+% b^3n a b^3n c 
+
 \end{enumerate}
 
-$$w = b^{i_0}a^{p_1}c^{k_1}b^{i_1}a^{p_2}c^{k_2}b^{i_2}a^{p_3}c^{k_3}b^{i_3}\ldots a^{p_r}c^{k_r}b^{i_r}a^{p_{r + 1}}, p_1 \geq 1 $$
 
-\[ \sum_{m=1}^{r + 1}{p_m} \leq \sum_{m=0}^{r}{i_m} +  \sum_{m=1}^{r}{k_m}\]
+Докажем, что данный язык не принадлежит классу $\mathtt{DCFL}$. Рассмотрим следующие слова:
+
+% b^3n a b^n b^2n c - это слово не накачивается во втором случае, если брать суффикс b^3n a b^n 
+% b^3n a b^n b^n a b^2n a^3n-2   - это слово не накачивается во втором случае, если брать суффикс b^3n a b^n 
+%
+\begin{itemize}
+  \item $w_1 = b^{3n} a b^n b^{2n} c$
+  \item $w_2 = b^{n} b^{2n} a b^{2n} a b^{2n} c^{2n} a^{n-2}$
+  % \item $w_2 = b^{3n} a b^{2n} a b^{2n} a^{3n-2}$
+\end{itemize}
+
+% Для получение слова $w_1$ небходимо к слову $ba$ применить сначала правило 3, далее $3n$ раз правило 1. Слово $w_2$ получается из базового слова $b^{3n}a^{3n}$ применением ко второй букве $a$ правила 1 $2n$ раз. Параметр $n$ - это длина накачки, считаем, что $n$ больше нуля, иначе сделаем замену $n = n + 1$. Пусть $x = b^{3n} a b^n$, $y = b^{2n} c$, $z = b^{n} a b^{2n} a^{3n-2}$.
+Рассмотрим два случая:
+
+\begin{enumerate}
+  \item{Накачка общего префикса $x$. Пусть $x = x_0 x_1 x_2 x_3 x_4$.Рассмотрим слово $w_2$. Если $x_1 x_2 x_3 \in b^{3n}$, то отрицательная накачка выводит слово из языка, теряется баланс с буквами $c$. Если $x_1 x_2 x_3 \in b^{n}$, то любая($i \ne 1$) накачка выводит слово из языка}, т.к. теряется баланс между буквами $b$, которые были пораждены с помощью первого правила. Если $x_1 \in b^{3n}$, $x_3 \in b^{n}$, то отрицательная накачка выводит слово из языка, т.к. нарушаются обе указанных выше причины. Пусть $x_1 = b^{k_1} a b^{k_2}$, $x_2 = b^{k_3}$ и $i = 2$. Получим слово: $b^{n} b^{2n} a [b^{k_2} b^{k_1} a b^{2n + k_3} a b^{2n} c^{2n}] a^{n-2}$. Подслово выделенное квадратными нарушает баланс между $b$ и $c$, т.к. $k_1 + k_2 < n < 2n$. Аналогично для случая  $x_2 = b^{k_1} a b^{k_2}$, $x_1 = b^{k_3}$ 
+
+    % Если $a \in x_1$ либо $a \in x_3$, то накачка при $i > 1$ выводит слово из языка, т.к. в блоке $b^{3n} \dots c^{2n}$ не может быть больше двух букв $a$, т.к. наличие букв $c$ говорит о применение правила 3, тогда если оно было применено к исходным буквам $b$, то в этом блоке должна находиться лишь одна буква $a$, если правило 3 было применено к буквам порожденным с первого правила, то в таком блоке должно быть две буквы $a$.
+  \item{Синхронная накачка. Рассмотрим слово $w_1$. Пусть $x = x_0 x_1 x_2$, $y = y_0 y_1 y_2$. Т.к по условию леммы $|x_1 x_2| \leq n$, то $x_1 = b^{k_1}$ и $x_2 = b^{k_2}$, $k_1 + k_2 \leq n$, $k_1 > 0$}. Если $y_1 = b^{k_3}, k_3 >= 0$, то накачка при $i > 1$ выводит слово из языка, т.к. теряется баланс между буквами $b$, порожденными первым правилом. Если $y_1 = c$, то накачка при $i > 2$ выводит слово из языка, т.к максимальная длина суффикса состоящего из букв $c$ в данном случае может быть только единицей.
+    Пусть $y_1 = b^{k_3}c, k_3 > 0$, тогда при $i = 0$ получим слово $w_3 = b^{3n}ab^{3n - k_1 - k_2}$, которое не принадлежит языку, потому что оно могло быть получено только из базового слова $ba$, но т.к. $k_1 + k_2 \geq 2$, то слово из которого получено $w_3$ должно быть $b^{k_4}a, k_4 \geq 2$, а это слово не является базовым. 
+\end{enumerate}
+
+Таким образом, данный язык не принадлежит классу $\mathtt{DCFL}$. 
+
+
+\newpage
+
+\begin{figure}[H]
+	\centering 
+
+    \rotatebox{90}{
+	\begin{tikzpicture}
+		\node[state, initial] (q0) {0};
+		\node[state, right of=q0] (q1) {1};
+		\node[state, right of=q1] (q2) {2};
+		\node[state, right of=q2] (q3) {3};
+		\node[state, below left of=q3] (q4) {4};
+		\node[state, right of=q4] (q5) {5};
+		\node[state, right of=q5] (q6) {6};
+		\node[state, below left of=q2] (q7) {7};
+	  \node[state, below of=q5] (q13) {13};
+		\node[state, below left of=q13] (q10) {10};
+    \node[state, left of=q10] (q9) {9};
+  	\node[state, left of=q9] (q8) {8};
+		\node[state, right of=q10] (q11) {11};
+		\node[state, below left of=q7, accepting] (q12) {12};
+		\node[state, right of=q13, accepting] (q14) {14};
+		\node[state, below left of=q10, accepting] (q15) {15};
+		\node[state, below right of=q0] (q16) {16};
+		  
+    \draw
+      (q0) edge[below] node{$\varepsilon$} (q1)
+      (q1) edge[loop above] node{$b,\frac{\forall}{X\forall}$} (q1)
+      (q1) edge[above] node{$a,\frac{X(Z_0)}{X(Z_0)},\frac{Y}{\varepsilon}$} (q2)
+      
+      (q2) edge[loop above] node{$b,\frac{X}{\varepsilon}$} (q2)
+      
+      (q2) edge[pos=0.8, left, bend right] node{$\varepsilon,\frac{Y}{\varepsilon}$} (q16)
+      (q2) edge[above] node{$c,\frac{X}{XX}$} (q3)
+      (q2) edge[left] node{$\varepsilon,\frac{X}{X}$} (q4)
+      (q3) edge[right] node{$\varepsilon,\frac{X}{X}$} (q4)
+      
+      (q3) edge[below, bend left] node{$b,\frac{X}{\varepsilon}$} (q2)
+      
+      (q3) edge[loop above] node{$c,\frac{X}{XX}$} (q3)
+      
+      (q5) edge[above] node{$c,\frac{X}{XX}$} (q6)
+      (q5) edge[left] node{$c,\frac{X}{\varepsilon}$} (q13)
+      (q6) edge[below, bend left] node{$b,\frac{X}{\varepsilon}$} (q5)
+      (q7) edge[loop above] node{$c,\frac{Y}{YY}$} (q7)
+      (q8) edge[loop below] node{$a,\frac{Y}{\varepsilon}$} (q8)
+      (q13) edge[loop below, in=330, out=300, looseness=5] node{$c,\frac{X}{\varepsilon}$} (q13)
+      (q10) edge[right] node{$\varepsilon,\frac{Y}{\varepsilon}$} (q15)
+      
+      (q13) edge[above] node{$\varepsilon,\frac{Y}{\varepsilon}$} (q14)
+      (q13) edge[above, bend right] node{$\varepsilon,\frac{Y}{Y}$} (q8)
+      (q7) edge[left] node{$a,\frac{Y}{Y}$} (q8)
+      (q2) edge[right] node{$a,\frac{Y}{\varepsilon}$} (q8)
+      
+      (q4) edge[above] node{$a,\frac{X}{X}$} (q5)
+      (q2) edge[pos=0.3, left] node{$c,\frac{Y/Z_0}{Y/Z_0}$} (q7)
+
+      
+      (q8) edge[below] node{$\varepsilon, \frac{Y}{Y}$} (q9)
+      
+      (q4) edge[loop left] node{$b,\frac{X}{XX}$} (q4)
+      (q9) edge[loop above] node{$b,\frac{X}{XX}$} (q9)
+      (q9) edge[below] node{$a, \frac{Y}{Y}, \frac{X}{X}$} (q10)
+      % (q10) edge[above, bend right] node{$b, \frac{Y}{XY}$} (q9)
+      
+      (q10) edge[pos=0.8,left] node{$\varepsilon,\frac{X}{X}$} (q4)
+      (q11) edge[pos=0.7, right] node{$\varepsilon,\frac{X}{X}$} (q4)
+      (q10) edge[above] node{$c,\frac{X}{XX}$} (q11)
+      (q11) edge[below, bend left] node{$b,\frac{X}{\varepsilon}$} (q10)
+      (q11) edge[loop below] node{$c,\frac{X}{XX}$} (q11)
+      (q6) edge[loop above] node{$c,\frac{X}{XX}$} (q6)
+      (q5) edge[loop above] node{$b,\frac{X}{\varepsilon}$} (q5)
+      (q10) edge[loop below] node{$b,\frac{X}{\varepsilon}$} (q10)
+      (q0) edge[left] node{$\varepsilon, \frac{Z_0}{Z_0}$} (q12)
+      (q7) edge[pos=0.3, left] node{$\varepsilon, \frac{Z_0}{Z_0}$} (q12)
+      (q10) edge[below, bend left] node{$\varepsilon, \frac{Y}{\varepsilon}$} (q8)
+      (q8) edge[left] node{$\varepsilon, \frac{Y}{\varepsilon}, \frac{Z_0}{Z_0}$} (q12)
+      (q16) edge[pos=0.3, left] node{$\varepsilon, \frac{Z_0}{Z_0}$} (q12)
+      
+      (q0) edge[loop above] node{$b,\frac{\forall}{Y\forall}$} (q0);
+      
+      
+	\end{tikzpicture}
+    }
+  
+	\caption{Автомат для языка $L$}
+	\label{fig:task_automata}
+\end{figure}
+
 
 \newpage 
+
 \section{Задача 2}
 
 Язык $\Big\{ w \ \Big| \ |w|_{ab} \ = \ |w|_{baa} \ \& \ w = w^{R} \Big\}$. Алфавит $\{a, b\}$
@@ -126,6 +253,7 @@ $$
   &[Regexp] \rightarrow b &; \quad  &{Regexp.val \coloneqq b}
 \end{aligned}
 $$
+
 
 
 
