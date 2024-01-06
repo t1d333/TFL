@@ -17,3 +17,9 @@ affixes alphabet = affixes' [] alphabet
         affixes' alphabet remains =
             affixes' (alphabet ++ [head remains]) (tail remains) ++
             affixes' alphabet (tail remains)
+
+
+cartesianProduct :: [Automata] -> [Automata] -> [(Automata, Automata)]
+cartesianProduct prefixes suffixes = [(p, s) | p <- prefixes, s <- suffixes]
+
+

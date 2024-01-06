@@ -10,20 +10,38 @@ library uma-dot
         , parsec ^>=3.1.16.1
     default-language: Haskell2010
 
+library uma-wgraph
+    exposed-modules: WGraph
+    other-modules: ListUtils
+    hs-source-dirs: src
+    build-depends:
+          base ^>=4.17.2.0
+        , uma-list-utils
+    default-language: Haskell2010
+
 library uma-automata
     exposed-modules: Automata
-    other-modules: Dot
+    other-modules: Dot, WGraph, ListUtils
     hs-source-dirs: src
     build-depends:
           base ^>=4.17.2.0
         , parsec ^>=3.1.16.1
         , uma-dot
+        , uma-list-utils
+        , uma-wgraph
         , containers ^>=0.6.7
+    default-language: Haskell2010
+
+library uma-list-utils
+    exposed-modules: ListUtils
+    hs-source-dirs: src
+    build-depends:
+          base ^>=4.17.2.0
     default-language: Haskell2010
 
 library uma-affixes
     exposed-modules: Affixes
-    other-modules: Automata
+    other-modules: Automata, Dot
     hs-source-dirs: src
     build-depends:
           base ^>=4.17.2.0
@@ -72,5 +90,17 @@ Test-Suite automata-test
         , test-framework
         , test-framework-quickcheck2
         , QuickCheck ^>=2.14.3
+    hs-source-dirs: testsuite
+    default-language: Haskell2010
+
+Test-Suite wgraph-test
+    type: exitcode-stdio-1.0
+    main-is: tests/WGraphTest.hs
+    build-depends:
+          base ^>=4.17.2.0
+        , test-framework
+        , test-framework-hunit
+        , HUnit
+        , uma-wgraph
     hs-source-dirs: testsuite
     default-language: Haskell2010
