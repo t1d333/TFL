@@ -13,6 +13,7 @@ module WGraph (
 import qualified Data.Function as Function
 import qualified Data.List as List
 import qualified Data.Bifunctor as Bifunctor
+import qualified Data.Maybe as Maybe
 
 import ListUtils
 
@@ -53,6 +54,22 @@ getVertices (WGraph g) = List.map fst g
 addVertices :: Ord v => [v] -> WGraph v w -> WGraph v w
 addVertices vs (WGraph g) = WGraph $ insertManyUniqueBy (Function.on compare fst) (List.map (, []) vs) g
 
+removeVertices :: Ord v => [v] -> WGraph v w -> WGraph v w
+removeVertices vs (WGraph g) =
+    WGraph $
+    List.map (Bifunctor.second $ removeManySortedBy [] removeFilter vs) $
+    removeManySortedBy [] removeFilter vs g
+    where
+        removeManySortedBy :: [b] -> (a -> b -> Ordering) -> [a] -> [b] -> [b]
+        removeManySortedBy result p [] a = List.reverse result ++ a
+        removeManySortedBy result p e [] = List.reverse result
+        removeManySortedBy result p e a =
+            case p (head e) (head a) of
+                LT -> removeManySortedBy result p (tail e) a
+                EQ -> removeManySortedBy result p e (tail a)
+                GT -> removeManySortedBy (head a : result) p e (tail a)
+        removeFilter x y = compare x $ fst y
+
 getReachabilityMatrix :: Ord v => WGraph v w -> [(v, [v])]
 getReachabilityMatrix (WGraph g) = getComplement reachabilityMatrixComplement
     where
@@ -67,7 +84,7 @@ getReachabilityMatrix (WGraph g) = getComplement reachabilityMatrixComplement
                 getReachabilityMatrix'' [] complement = complement
                 getReachabilityMatrix'' es complement =
                     if not $ check from to complement then
-                        if not (check from k complement) || not(check k to complement) then
+                        if not (check from k complement) || not (check k to complement) then
                             getReachabilityMatrix'' (tail es) complement
                         else
                             getReachabilityMatrix'' (tail es) (remove from to complement)
@@ -85,7 +102,7 @@ getReachabilityMatrix (WGraph g) = getComplement reachabilityMatrixComplement
                             case List.lookup f c of
                                 Just ts -> replaceOneBy ((f ==) . fst) (f, List.delete t ts) c
                                 Nothing -> error "WGraph.getReachabilityMatrix : no such vertex in graph"
-        
+
         getComplement = List.map (Bifunctor.second (vertices List.\\))
 
 getInputDegrees :: Ord v => WGraph v w -> [(v, Int)]
@@ -137,5 +154,70 @@ getSubgraph vs (WGraph g) = WGraph $ List.map (Bifunctor.second vertexFilter) (v
     where
         vertexFilter = List.filter ((`List.elem` vs) . fst)
 
-getStrongComponent :: WGraph v w -> WGraph v w
-getStrongComponent = undefined
+getCircuits :: WGraph v w -> WGraph v w
+getCircuits = undefined
+    where
+        getStrongComponents ::
+            (Eq v, Ord v) =>
+            [WGraph v w] -> -- tail recursion accumulator
+            WGraph v w ->   -- subgraph
+            [(v, Int)] ->   -- input degrees of subgraph
+            [(v, [v])] ->   -- reachability matrix of subgraph
+            [WGraph v w]    -- list of all strong components
+        getStrongComponents accumulator (WGraph []) _ _ = List.reverse accumulator
+        getStrongComponents accumulator graph inputDegrees reachabilityMatrix
+            | Maybe.isJust inputDegreesCheck =
+                let
+                    inputDegreesCheckResult = Maybe.fromMaybe undefined inputDegreesCheck
+                in
+                getStrongComponents accumulator
+                (removeVertices [inputDegreesCheckResult] graph)
+                (removeVertexFromInputDegrees inputDegreesCheckResult inputDegrees)
+                reachabilityMatrix
+            | Maybe.isJust reachabilityMatrixCheck =  -- TODO: syncronize reachability matrix with subgraph then remove unreachable vertices
+                let
+                    reachabilityMatrixCheckResult = Maybe.fromMaybe undefined reachabilityMatrixCheck
+                in
+                getStrongComponents accumulator
+                (removeVertices [reachabilityMatrixCheckResult] graph)
+                (removeVertexFromInputDegrees [reachabilityMatrixCheckResult] inputDegrees)
+                (removeVertexFromReachabilityMatrix [reachabilityMatrixCheckResult] reachabilityMatrix)
+            | otherwise =
+                getStrongComponents (graph : accumulator)
+                (removeVertices [head vertices] graph)
+                (removeVertexFromInputDegrees [head vertices] inputDegrees)
+                (removeVertexFromReachabilityMatrix [head vertices] reachabilityMatrix)
+
+            where
+                vertices = getVertices graph
+
+                inputDegreesCheck = inputDegreesCheck' inputDegrees
+                    where
+                        inputDegreesCheck' [] = Nothing
+                        inputDegreesCheck' ids = 
+                            case head ids of
+                                (v, 0) -> Just v
+                                _ -> inputDegreesCheck' $ tail ids
+                
+                reachabilityMatrixCheck = reachabilityMatrixCheck' reachabilityMatrix
+                    where
+                        reachabilityMatrixCheck' [] = Nothing
+                        reachabilityMatrixCheck' rs =
+                            case firstInequalitySorted (snd $ head rs) vertices of
+                                (Nothing, Nothing) -> reachabilityMatrixCheck' $ tail rs
+                                _ -> Just $ fst $ head rs 
+                            where
+                                firstInequalitySorted :: Eq a => [a] -> [a] -> (Maybe a, Maybe a)
+                                firstInequalitySorted [] [] = (Nothing, Nothing)
+                                firstInequalitySorted a [] = (Just $ head a, Nothing)
+                                firstInequalitySorted [] b = (Nothing, Just $ head b)
+                                firstInequalitySorted a b
+                                    | head a == head b = firstInequalitySorted (tail a) (tail b)
+                                    | otherwise = (Just $ head a, Just $ head b)
+
+                syncMatrixWithDegrees = undefined
+                removeVertexFromInputDegrees = undefined
+                removeVertexFromReachabilityMatrix = undefined
+
+        clearByInputDegrees = undefined
+        clearByReachabilityMatrix = undefined

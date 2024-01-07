@@ -56,10 +56,3 @@ dotToAutomata dg = dotGraphToAutomata dg $ Automata { adj = WGraph [], finalStat
                         n1c = read n1 :: Int
                         n2c = read n2 :: Int
                 _ -> error "wrong amount of nodes or invalid attributes"
-
-getCircuits :: Automata -> [[State]]
-getCircuits = undefined
-    where
-        circuit = undefined
-            where
-                unblock = undefined
