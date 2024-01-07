@@ -101,7 +101,7 @@ initial text=$ $, % sets the text that appears on the start arrow
 %
 \begin{itemize}
   \item $w_1 = b^{3n} a b^n b^{2n} c$
-  \item $w_2 = b^{n} b^{2n} a b^{2n} a b^{2n} c^{2n} a^{n-2}$
+  \item $w_2 = b^{3n} a b^{n} b^{n} a b^{2n} c^{2n} a^{n-2}$
   % \item $w_2 = b^{3n} a b^{2n} a b^{2n} a^{3n-2}$
 \end{itemize}
 
@@ -109,11 +109,11 @@ initial text=$ $, % sets the text that appears on the start arrow
 Рассмотрим два случая:
 
 \begin{enumerate}
-  \item{Накачка общего префикса $x$. Пусть $x = x_0 x_1 x_2 x_3 x_4$.Рассмотрим слово $w_2$. Если $x_1 x_2 x_3 \in b^{3n}$, то отрицательная накачка выводит слово из языка, теряется баланс с буквами $c$. Если $x_1 x_2 x_3 \in b^{n}$, то любая($i \ne 1$) накачка выводит слово из языка}, т.к. теряется баланс между буквами $b$, которые были пораждены с помощью первого правила. Если $x_1 \in b^{3n}$, $x_3 \in b^{n}$, то отрицательная накачка выводит слово из языка, т.к. нарушаются обе указанных выше причины. Пусть $x_1 = b^{k_1} a b^{k_2}$, $x_2 = b^{k_3}$ и $i = 2$. Получим слово: $b^{n} b^{2n} a [b^{k_2} b^{k_1} a b^{2n + k_3} a b^{2n} c^{2n}] a^{n-2}$. Подслово выделенное квадратными нарушает баланс между $b$ и $c$, т.к. $k_1 + k_2 < n < 2n$. Аналогично для случая  $x_2 = b^{k_1} a b^{k_2}$, $x_1 = b^{k_3}$ 
+  \item{Накачка общего префикса $x$. Пусть $x = x_0 x_1 x_2 x_3 x_4$.Рассмотрим слово $w_2$. Если $x_1 x_2 x_3 \in b^{3n}$, то отрицательная накачка выводит слово из языка, теряется баланс с буквами $c$. Если фрагмент $x_1 x_2 x_3 \in b^{n}$ и располагается справа от первой буквы $a$, то любая($i \ne 1$) накачка выводит слово из языка}, т.к. теряется баланс между буквами $b$, которые были пораждены с помощью первого правила. Если $x_1 \in b^{3n}$, $x_3 \in b^{n}$, то отрицательная накачка выводит слово из языка, т.к. нарушаются обе указанных выше причины. Пусть $x_1 = b^{k_1} a b^{k_2}$, $x_2 = b^{k_3}$ и $i = 2$. Получим слово: $b^{n} b^{2n} a [b^{k_2} b^{k_1} a b^{2n + k_3} a b^{2n} c^{2n}] a^{n-2}$. Подслово выделенное квадратными нарушает баланс между $b$ и $c$, т.к. $k_1 + k_2 < n < 2n$. Аналогично для случая  $x_2 = b^{k_1} a b^{k_2}$, $x_1 = b^{k_3}$ 
 
     % Если $a \in x_1$ либо $a \in x_3$, то накачка при $i > 1$ выводит слово из языка, т.к. в блоке $b^{3n} \dots c^{2n}$ не может быть больше двух букв $a$, т.к. наличие букв $c$ говорит о применение правила 3, тогда если оно было применено к исходным буквам $b$, то в этом блоке должна находиться лишь одна буква $a$, если правило 3 было применено к буквам порожденным с первого правила, то в таком блоке должно быть две буквы $a$.
   \item{Синхронная накачка. Рассмотрим слово $w_1$. Пусть $x = x_0 x_1 x_2$, $y = y_0 y_1 y_2$. Т.к по условию леммы $|x_1 x_2| \leq n$, то $x_1 = b^{k_1}$ и $x_2 = b^{k_2}$, $k_1 + k_2 \leq n$, $k_1 > 0$}. Если $y_1 = b^{k_3}, k_3 >= 0$, то накачка при $i > 1$ выводит слово из языка, т.к. теряется баланс между буквами $b$, порожденными первым правилом. Если $y_1 = c$, то накачка при $i > 2$ выводит слово из языка, т.к максимальная длина суффикса состоящего из букв $c$ в данном случае может быть только единицей.
-    Пусть $y_1 = b^{k_3}c, k_3 > 0$, тогда при $i = 0$ получим слово $w_3 = b^{3n}ab^{3n - k_1 - k_2}$, которое не принадлежит языку, потому что оно могло быть получено только из базового слова $ba$, но т.к. $k_1 + k_2 \geq 2$, то слово из которого получено $w_3$ должно быть $b^{k_4}a, k_4 \geq 2$, а это слово не является базовым. 
+    Пусть $y_1 = b^{k_3}c, k_3 > 0$, тогда при $i = 0$ получим слово $w_3 = b^{3n}ab^{3n - k_1 - k_3}$, которое не принадлежит языку, потому что оно могло быть получено только из базового слова $ba$, но т.к. $k_1 + k_3 \geq 2$, то слово из которого получено $w_3$ должно быть $b^{k_4}a, k_4 \geq 2$, а это слово не является базовым. 
 \end{enumerate}
 
 Таким образом, данный язык не принадлежит классу $\mathtt{DCFL}$. 
@@ -272,9 +272,10 @@ $$
 $$
 \begin{aligned}
   &[Regexp'] &\rightarrow \quad &{(\varepsilon|[Regexp_{rhs}])} & &[Regexp_{lhs}] &\rightarrow \quad &{[Regexp_{lhs}][Regexp_{lhs}]} \\
-  &[Regexp'] &\rightarrow \quad &{([Regexp_{lhs}]|\varepsilon)} & &[Regexp_{lhs}] &\rightarrow \quad  &{[Regexp_{iter}]} \\
-  &[Regexp_{rhs}] &\rightarrow \quad &{[Regexp']} & &[Regexp_{lhs}] &\rightarrow \quad  &a\\ 
-  &[Regexp_{rhs}] &\rightarrow \quad &{[Regexp_{iter}]} & &[Regexp_{lhs}] &\rightarrow \quad  &b\\ 
+  &[Regexp'] &\rightarrow \quad &{([Regexp_{lhs}]|\varepsilon)} & &[Regexp_{lhs}] &\rightarrow \quad  &{([Regexp_{iter}])*} \\
+  &[Regexp'] &\rightarrow \quad &{([Regexp_{lhs}]|[Regexp_{rhs}])} & &[Regexp_{lhs}] &\rightarrow \quad  &a\\ 
+  &[Regexp_{rhs}] &\rightarrow \quad &{[Regexp']}  & &[Regexp_{lhs}] &\rightarrow \quad  &b\\ 
+  &[Regexp_{rhs}] &\rightarrow \quad &{([Regexp_{iter}])*} \\
   &[Regexp_{rhs}] &\rightarrow \quad &{[Regexp_{rhs}][Regexp_{rhs}]} \\
   &[Regexp_{rhs}] &\rightarrow \quad &a \\
   &[Regexp_{rhs}] &\rightarrow \quad &b
@@ -300,12 +301,12 @@ $$
   &[S] &\rightarrow \quad &{[Regexp]} & &[Regexp_{iter}] &\rightarrow \quad  &[Regexp'] \\
   &[Regexp] &\rightarrow \quad &{[Regexp][Regexp]} & &[Regexp_{iter}] &\rightarrow \quad &[Regexp_{iter}][Regexp_{iter}] \\ 
   &[Regexp] &\rightarrow \quad &{[Regexp']} & &[Regexp_{iter}] &\rightarrow \quad &a \\
-  &[Regexp] &\rightarrow \quad &{[Regexp_{iter}]} & &[Regexp_{iter}] &\rightarrow \quad &b\\
+  &[Regexp] &\rightarrow \quad &{([Regexp_{iter}])*} & &[Regexp_{iter}] &\rightarrow \quad &b\\
   &[Regexp'] &\rightarrow \quad &{(\varepsilon|[Regexp_{rhs}])} & &[Regexp_{lhs}] &\rightarrow \quad &{[Regexp_{lhs}][Regexp_{lhs}]} \\
-  &[Regexp'] &\rightarrow \quad &{([Regexp_{lhs}]|\varepsilon)} & &[Regexp_{lhs}] &\rightarrow \quad  &{[Regexp_{iter}]} \\
+  &[Regexp'] &\rightarrow \quad &{([Regexp_{lhs}]|\varepsilon)} & &[Regexp_{lhs}] &\rightarrow \quad  &{([Regexp_{iter}])*} \\
   &[Regexp'] &\rightarrow \quad &{([Regexp_{lhs}]|[Regexp_{rhs})} & &[Regexp_{lhs}] &\rightarrow \quad  &a \\
   &[Regexp_{rhs}] &\rightarrow \quad &{[Regexp']} & &[Regexp_{lhs}] &\rightarrow \quad  &b \\ 
-  &[Regexp_{rhs}] &\rightarrow \quad &{[Regexp_{iter}]} \\ 
+  &[Regexp_{rhs}] &\rightarrow \quad &{([Regexp_{iter}])*} \\ 
   &[Regexp_{rhs}] &\rightarrow \quad &{[Regexp_{rhs}][Regexp_{rhs}]} \\
   &[Regexp_{rhs}] &\rightarrow \quad &a \\
   &[Regexp_{rhs}] &\rightarrow \quad &b \\
