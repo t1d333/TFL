@@ -12,6 +12,7 @@ module WGraph (
 
 import qualified Data.Function as Function
 import qualified Data.List as List
+import qualified Data.Bifunctor as Bifunctor
 
 import ListUtils
 
@@ -31,7 +32,7 @@ getNeighbours v (WGraph g) =
     case List.lookup v g of
         Just ts -> nubSorted $ List.map fst ts
         Nothing -> error "WGraph.getNeighbours : no such vertex in graph"
-    where 
+    where
         nubSorted arr = undefined
             where
                 nubSorted' result [] = List.reverse result
@@ -52,10 +53,40 @@ getVertices (WGraph g) = List.map fst g
 addVertices :: Ord v => [v] -> WGraph v w -> WGraph v w
 addVertices vs (WGraph g) = WGraph $ insertManyUniqueBy (Function.on compare fst) (List.map (, []) vs) g
 
-getReachabilityMatrix :: WGraph v w -> [(v, [v])]
-getReachabilityMatrix (WGraph g) = undefined
+getReachabilityMatrix :: Ord v => WGraph v w -> [(v, [v])]
+getReachabilityMatrix (WGraph g) = getComplement reachabilityMatrixComplement
     where
-        getReachabilityMatrix' marker matrix = undefined
+        vertices = getVertices (WGraph g)
+        edges = getEdges (WGraph g)
+        reachabilityMatrixComplement = getReachabilityMatrix' vertices [(i, vertices) | i <- vertices]
+
+        getReachabilityMatrix' [] complement = complement
+        getReachabilityMatrix' vs complement =
+            getReachabilityMatrix' (tail vs) (getReachabilityMatrix'' edges complement)
+            where
+                getReachabilityMatrix'' [] complement = complement
+                getReachabilityMatrix'' es complement =
+                    if not $ check from to complement then
+                        if not (check from k complement) || not(check k to complement) then
+                            getReachabilityMatrix'' (tail es) complement
+                        else
+                            getReachabilityMatrix'' (tail es) (remove from to complement)
+                    else
+                        getReachabilityMatrix'' (tail es) complement
+                    where
+                        k = head vs
+                        from = fst $ head es
+                        to = snd $ head es
+                        check f t c =
+                            case List.lookup f c of
+                                Just ts -> t `List.elem` ts
+                                Nothing -> error "WGraph.getReachabilityMatrix : no such vertex in graph"
+                        remove f t c =
+                            case List.lookup f c of
+                                Just ts -> replaceOneBy ((f ==) . fst) (f, List.delete t ts) c
+                                Nothing -> error "WGraph.getReachabilityMatrix : no such vertex in graph"
+        
+        getComplement = List.map (Bifunctor.second (vertices List.\\))
 
 getInputDegrees :: Ord v => WGraph v w -> [(v, Int)]
 getInputDegrees g = getInputDegrees' (List.map (, 0) $ getVertices g) $ getEdges g
@@ -78,7 +109,7 @@ isGraphHasCircuits g = isGraphHasCircuits' $ List.map (, White) vertices
         toVisit = getNeighbours anyKey g
         paint s c = replaceOneBy (Function.on (==) fst (s, c)) (s, c)
 
-        isGraphHasCircuits' marker = 
+        isGraphHasCircuits' marker =
             case List.find ((== White) . snd) marker of
                 Just (v, _) ->
                     case dfs marker v of
@@ -102,7 +133,7 @@ isGraphHasCircuits g = isGraphHasCircuits' $ List.map (, White) vertices
 
 
 getSubgraph :: Eq v => [v] -> WGraph v w -> WGraph v w
-getSubgraph vs (WGraph g) = WGraph $ List.map (\(v, ts) -> (v, vertexFilter ts)) $ vertexFilter g
+getSubgraph vs (WGraph g) = WGraph $ List.map (Bifunctor.second vertexFilter) (vertexFilter g)
     where
         vertexFilter = List.filter ((`List.elem` vs) . fst)
 

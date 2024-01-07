@@ -47,6 +47,8 @@ library uma-affixes
           base ^>=4.17.2.0
         , parsec ^>=3.1.16.1
         , uma-dot
+        , uma-list-utils
+        , uma-wgraph
         , containers ^>=0.6.7
         , uma-automata
     default-language: Haskell2010
