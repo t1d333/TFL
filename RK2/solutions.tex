@@ -16,7 +16,7 @@
 ->,
 >=stealth',
 node distance=4.5cm, % specifies the minimum distance between two nodes. Change if necessary.
-every state/.style={thick, fill=gray!10}, % sets the properties for each ’state’ node
+every state/.style={thick, fill=gray!15}, % sets the properties for each ’state’ node
 initial text=$ $, % sets the text that appears on the start arrow
 }
 %
@@ -76,36 +76,15 @@ initial text=$ $, % sets the text that appears on the start arrow
 Начальное количество букв $a$ и $b$ равно, далее количество исходных $b$ может либо остаться таким же, либо с помощью правила 3 некоторые $b$, могут перейти в $c$, но суммарное количество $b$ и $c$ останется равным $n$. Буквы $a$ могут быть переписаны с помощью правила 2, и их количество станет меньше $n$. Каждой буквой $a$ с помощью первого и третьего правил могут порождаться некоторые блоки, в которых количество букв $b$ и $c$ сбалансированно, т.к. правило 1 порождает блоки вида $b^k a b^k$, в которых количество букв $b$ сбалансированно. Поэтому при построении PDA стоит ввести два стековых символа, первый будет использовать для подсчета исходных $b$ и букв $c$, полученных из этих букв $b$. Второй символ необходим для проверки баланса букв $b$ и $c$, которые были пораждены с помощью повторения правил 2, 3. Также этот блок может содержать один внутренний блок такой же структуры, из-за наличия правила 3, тогда исходный блок должен заканчиваться на $c^r$, после чтения которых в стеке должны оставаться лишь символы первого вида.
 
 
-
-% b^3n a b^n b^2n c
-% b^3n a b^n b^2n c - это слово не накачивается во втором случае, если брать суффикс b^3n a b^n 
-% b^3n a b^n b^n a b^2n a^3n-2   - это слово не накачивается во втором случае, если брать суффикс b^3n a b^n 
-% b^2n a c^2n a^4n-1 
-
-% b^2n b^n a b^n a
-% b^2n a c^n  b^n a
-
-
-% a c
-% b^4n a a
-% b^2n a c^2n a
-% b^3n a b^3n c 
-
 \end{enumerate}
 
 
 Докажем, что данный язык не принадлежит классу $\mathtt{DCFL}$. Рассмотрим следующие слова:
 
-% b^3n a b^n b^2n c - это слово не накачивается во втором случае, если брать суффикс b^3n a b^n 
-% b^3n a b^n b^n a b^2n a^3n-2   - это слово не накачивается во втором случае, если брать суффикс b^3n a b^n 
-%
 \begin{itemize}
   \item $w_1 = b^{3n} a b^n b^{2n} c$
   \item $w_2 = b^{3n} a b^{n} b^{n} a b^{2n} c^{2n} a^{n-2}$
-  % \item $w_2 = b^{3n} a b^{2n} a b^{2n} a^{3n-2}$
 \end{itemize}
-
-% Для получение слова $w_1$ небходимо к слову $ba$ применить сначала правило 3, далее $3n$ раз правило 1. Слово $w_2$ получается из базового слова $b^{3n}a^{3n}$ применением ко второй букве $a$ правила 1 $2n$ раз.
 
 Параметр $n$ - это длина накачки, считаем, что $n$ больше нуля, иначе сделаем замену $n = n + 1$. Пусть $x = b^{3n} a b^n$, $y = b^{2n} c$, $z = b^{n} a b^{2n} c^{2n} a^{n-2}$. Рассмотрим два случая:
 
@@ -316,6 +295,110 @@ $$
   &[Regexp] &\rightarrow \quad &b 
 \end{aligned}
 $$
+
+Язык $L$ описаваемый изначальной КС грамматикой для регулярок является детерминированным.
+Пример DPDA распознающего регулярные выражения изображен на рисунке \ref{fig:regex_dpda} 
+
+
+\begin{figure}[H]
+	\centering 
+
+	\begin{tikzpicture}
+		\node[state, initial, accepting] (q0) {0};
+		\node[state, right of=q0] (q1) {1};
+		\node[state, above right of=q1] (q2) {2};
+		\node[state, above left of=q2] (q3) {3};
+		\node[state, left of=q3] (q4) {4};
+		\node[state, below right of=q1] (q5) {5};
+		\node[state, below left of=q5] (q6) {6};
+		  
+    \draw
+       % (q1) edge[loop above] node{$b,\frac{\forall}{X\forall}$} (q1)
+      % (q1) edge[above] node{$a,\frac{X(Z_0)}{X(Z_0)},\frac{Y}{\varepsilon}$} (q2)
+      (q0) edge[above] node{$(,\frac{Z_0}{X Z_0}$} (q1)
+      (q0) edge[loop above] node{$a,b \  \frac{Z_0}{Z_0}$} (q0)
+      (q1) edge[loop above] node{$(, \frac{\forall}{X\forall}$} (q1)
+      (q1) edge[bend right, right] node{$|,\frac{X}{Y X}$} (q2)
+      (q2) edge[left, pos=0.2] node{$(,\frac{Y}{XY}$, $a, b\ \frac{Y}{Y}$} (q1)
+      (q2) edge[right]  node{$),\frac{Y}{\varepsilon}$} (q3)
+      (q1) edge[bend left, right, pos=0.7]  node{$),\frac{Y}{\varepsilon}$} (q3)
+      (q1) edge[bend left, right, pos=0.65]  node{$),\frac{X}{\varepsilon}$} (q5)
+      (q3) edge[above]  node{$\varepsilon,\frac{X}{\varepsilon}$} (q4)
+      (q4) edge[bend right, left]  node{$\varepsilon,\frac{Z_0}{Z_0}$} (q0)
+      (q4) edge[left]  node{$\varepsilon, \frac{X}{X}, \frac{Y}{Y}$} (q1)
+      (q5) edge[left]  node{$*$} (q6)
+      (q6) edge[left]  node{$\varepsilon, \frac{Z_0}{Z_0}$} (q0)
+      (q6) edge[bend right, right]  node{$\varepsilon, \frac{X}{X}, \frac{Y}{Y}$} (q1)
+      (q1) edge[loop below] node{$a,b \  \frac{\forall}{\forall}$} (q1);
+      
+     
+      
+	\end{tikzpicture}
+  
+	\caption{Автомат для языка регулярных выражений}
+	\label{fig:regex_dpda}
+\end{figure}
+
+
+
+
+На основе DPDA для регулярных выражений построим новый DPDA, который не будет принимать слова, содержащие подслова вида 2. Для экономии места, переходы с одинаковыми символами, но разными стековыми символами будут изображаться одним переходом с перечеслением возможных конфигураций стека.
+
+
+
+\begin{figure}[H]
+	\centering 
+
+  \begin{tikzpicture}[node distance=4cm, on grid, auto]
+		\node[state, initial, accepting] (q0) {0};
+		\node[state, right of=q0] (q1) {1};
+		\node[state, above right of=q1] (q2) {2};
+		\node[state, above left of=q2] (q3) {3};
+		\node[state, left of=q3] (q4) {4};
+		\node[state, below right of=q1] (q5) {5};
+		\node[state, below left of=q5] (q6) {6};
+		\node[state, above left of=q3] (q7) {7};
+		\node[state, above right of=q5] (q8) {8};
+		  
+    \draw
+      % (q1) edge[above] node{$a,\frac{X(Z_0)}{X(Z_0)},\frac{Y}{\varepsilon}$} (q2)
+      (q0) edge[above] node{$(,\frac{Z_0}{X Z_0}$} (q1)
+      (q0) edge[loop above] node{$a,b \  \frac{Z_0}{Z_0}$} (q0)
+      (q1) edge[loop below, out=220, in=190, looseness=8] node[align=center]{
+        $(, \frac{X}{XBX},$ \\
+        $\frac{B}{XB}, \frac{A}{XB}, \frac{Y}{XY}$
+        % $(, \frac{X}{XBX}, \frac{B}{XB}, \frac{A}{XB}, \frac{Y}{XY}$
+      } (q1)
+      (q1) edge[bend right, right] node{$|,\frac{X}{Y X}, \frac{B}{Y B}$} (q2)
+      (q2) edge[bend right, above] node[swap, align=center, pos=0.2]{$(,\frac{Y}{XY}$ \\ $a, b\ \frac{Y}{Y}$} (q1)
+      (q2) edge[bend right, right]  node{$),\frac{Y}{\varepsilon}$} (q3)
+      (q1) edge[bend left, right, pos=0.7]  node{$),\frac{Y}{\varepsilon}$} (q3)
+      (q1) edge[bend right, below, pos=0.7]  node{$),\frac{B}{\varepsilon}, \frac{A}{\varepsilon}$} (q8)
+      (q1) edge[right, pos=0.75]  node{$),\frac{X}{\varepsilon}$} (q5)
+      (q3) edge[above]  node{$\varepsilon,\frac{X}{\varepsilon}$} (q4)
+      (q3) edge[right]  node{$\varepsilon,\frac{B}{\varepsilon}$} (q7)
+      (q7) edge[right]  node{$\varepsilon,\frac{X}{\varepsilon}$} (q4)
+      (q4) edge[bend right, left]  node{$\varepsilon,\frac{Z_0}{Z_0}$} (q0)
+      (q4) edge[left, pos=0.4]  node{$\varepsilon, \frac{X}{AX}, \frac{B}{B}, \frac{Y}{Y}$} (q1)
+      (q5) edge[right]  node{$*$} (q6)
+      (q6) edge[left]  node{$\varepsilon, \frac{Z_0}{Z_0}$} (q0)
+      (q8) edge[bend left, right]  node{$\varepsilon, \frac{X}{\varepsilon}$} (q5)
+      (q6) edge[bend right, left]  node{$\varepsilon, \frac{X}{X}, \frac{Y}{Y}$} (q1)
+      (q1) edge[loop right] node{$a,b \  \frac{X}{BX}, \frac{A}{B}, \frac{B}{B}, \frac{Y}{Y}$} (q1);
+      
+     
+      
+	\end{tikzpicture}
+  
+	\caption{Автомат для языка регулярных выражений с ограничением 2}
+	\label{fig:regex_2_dpda}
+\end{figure}
+
+
+
+
+Пусть $A = \{a, b, |, *, (, )\}$, $L$ - язык порождаемый автоматом с рисунка \ref{fig:regex_2_dpda}. Далее рассмотрим регулярный язык $P$, который описывается регулярным выражением $((\ a \ | \ b \ | \ \varepsilon \ | \ ( \ | \ ) \ | \ \textbf{|} \ | \ * \ ))^*$. Данный язык содержит в себе $L$. Пусть далее $r$ обозначает регулярное выражение $((\ a \ | \ b \ | \ \varepsilon \ | \ ( \ | \ ) \ | \ \textbf{|} \ | \ * \ ))^*$.  Пусть язык $P'$ описывается регулярным выражением $r(){*}r$, тогда он содержит все слова в алфавите A, которые содержат $(){*}$ в качестве подслова. Пусть язык $P''$ описывается регулярным выражением $r((r){*}){*}r$, тогда он содержит все слова в алфавите A, которые содержат $((r){*}){*}$ в качестве подслова. Пусть язык $L^{\MakeUppercase{\romannumeral 4}}$ описывается регулярным выражением $r(|)r$, тогда он содержит все слова в алфавите A, которые содержат $(|)$ в качестве подслова. Рассмотрим язык $L'$ = $(((P \setminus P') \setminus P'') \setminus P''')$. Полученный язык является регулярным языком, т.к. множество регулярных языков замкнуто относительно операции разность. Пересечем языки $L$ и $L'$, получим новый детерминированный язык, который будет состоять из правильных регулярных выражений, в которых отсутствуют подслова вида 1, 2, 3, 4. 
+
 
 
 
