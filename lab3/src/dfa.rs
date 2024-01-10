@@ -97,22 +97,21 @@ impl DFA {
 
 impl Display for DFA {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        let mut result = "digraph D {\n\trankdir=LR\n".to_string();
+        let mut result = "digraph D {\n\trankdir=LR\n\tnode [shape = circle];\n".to_string();
 
         let final_states = self
             .final_states
             .iter()
-            .fold("\tnode [shape = doublecircle];".to_string(), |acc, s| {
-                format!("{} {}", acc, s)
+            .fold("".to_string(), |acc, s| {
+                format!("{}\t{} [shape = doublecircle];\n", acc, s)
             });
 
-        result = format!("{}\n{};", result, final_states);
+        result = format!("{}\n{}", result, final_states);
         result = format!(
             "{}\n\tinit [label=\"\", shape=point]\n\tinit -> {}",
             result, self.start_state
         );
 
-        result += "\n\tnode [shape = circle];";
 
         for (k, v) in self.transitions.iter() {
             result = format!("{}\n\t{} -> {} [label = \"{}\"];", result, k.0, v, k.1);
